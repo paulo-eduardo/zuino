@@ -12,6 +12,7 @@ class _QRCodeReaderState extends State<QRCodeReader> {
   QRViewController? controller;
   bool isScanning = true;
   Color borderColor = Colors.white;
+  bool isFlashOn = false;
 
   @override
   void reassemble() {
@@ -38,17 +39,21 @@ class _QRCodeReaderState extends State<QRCodeReader> {
               cutOutSize: 300,
             ),
           ),
-          if (!isScanning)
-            Center(
-              child: Container(
-                color: Colors.black54.withOpacity(0.5),
-                padding: const EdgeInsets.all(8.0),
-                child: const Text(
-                  'QR Code Scanned!',
-                  style: TextStyle(color: Colors.white, fontSize: 20),
-                ),
+          Container(
+            color: Colors.black54.withOpacity(0.5),
+          ),
+          Positioned(
+            bottom: 50,
+            left: MediaQuery.of(context).size.width / 2 - 25,
+            child: IconButton(
+              icon: Icon(
+                isFlashOn ? Icons.flash_off : Icons.flash_on,
+                color: Colors.white,
+                size: 50,
               ),
+              onPressed: _toggleFlash,
             ),
+          ),
         ],
       ),
     );
@@ -76,6 +81,15 @@ class _QRCodeReaderState extends State<QRCodeReader> {
         borderColor = Colors.red;
       });
     });
+  }
+
+  void _toggleFlash() {
+    if (controller != null) {
+      controller!.toggleFlash();
+      setState(() {
+        isFlashOn = !isFlashOn;
+      });
+    }
   }
 
   @override

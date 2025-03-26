@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:app/components/qr_code_reader.dart';
-import 'package:app/components/product_icon.dart';
+import 'package:mercadinho/components/qr_code_reader.dart';
+import 'package:mercadinho/components/product_icon.dart';
+import 'package:mercadinho/database/receipts_database.dart';
+import 'package:mercadinho/database/products_database.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:app/database_helper.dart'; // Add this import
+import 'package:hive/hive.dart';
+import 'package:path_provider/path_provider.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final appDocumentDir = await getApplicationDocumentsDirectory();
+  Hive.init(appDocumentDir.path);
   runApp(const MyApp());
 }
 
@@ -43,10 +49,9 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _loadProducts() async {
-    final dbHelper = DatabaseHelper();
-    final productList = await dbHelper.getProducts();
+    final box = await Hive.openBox('products');
     setState(() {
-      products = productList;
+      products = box.values.toList();
     });
   }
 
@@ -58,8 +63,7 @@ class _MyHomePageState extends State<MyHomePage> {
         body: jsonEncode({'url': url}),
       );
       if (response.statusCode == 200) {
-        final dbHelper = DatabaseHelper();
-        await dbHelper.insertReceipt(url);
+        final box = await Hive.openBox('products');
         final productList = (jsonDecode(response.body) as List).map((product) {
           return {
             'codigo': product['codigo'],
@@ -71,7 +75,11 @@ class _MyHomePageState extends State<MyHomePage> {
           };
         }).toList();
         for (var product in productList) {
-          await dbHelper.insertOrUpdateProduct(product);
+          final existingProduct = box.get(product['codigo']);
+          if (existingProduct != null) {
+            product['quantity'] += existingProduct['quantity'];
+          }
+          box.put(product['codigo'], product);
         }
         _loadProducts();
       } else {
@@ -85,65 +93,58 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        padding: const EdgeInsets.only(top: 40, left: 16, right: 16),
-        decoration: BoxDecoration(
-          color: Colors.grey[900],
+      appBar: AppBar(
+        title: Text(widget.title),
+      ),
+      body: GridView.builder(
+        padding: const EdgeInsets.all(8.0),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 3 / 2,
+          crossAxisSpacing: 8.0,
+          mainAxisSpacing: 8.0,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  widget.title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                CircleAvatar(
-                  backgroundColor: Colors.white,
-                  child: Icon(Icons.person, color: Colors.grey[900]),
-                ),
-              ],
-            ),
-            Expanded(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 1.0,
-                ),
-                itemCount: products.length,
-                itemBuilder: (context, index) {
-                  final product = products[index];
-                  return ProductIcon(
-                    name: product['name'],
-                    unit: product['unit'],
-                    unitValue: product['unitValue'],
-                    quantity: product['quantity'],
-                    total: product['unitValue'] * product['quantity'],
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
+        itemCount: products.length,
+        itemBuilder: (context, index) {
+          final product = products[index];
+          return ProductIcon(
+            name: product['name'],
+            unit: product['unit'],
+            unitValue: product['unitValue'],
+            quantity: product['quantity'],
+            total: product['unitValue'] * product['quantity'],
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          final url = await Navigator.push(
+          final result = await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => QRCodeReader()),
           );
-          if (url != null) {
-            await sendUrlToServer(url);
+          if (result != null) {
+            final url = result.toString();
+            final hasReceipt = await ReceiptsDatabase().hasReceipt(url);
+            if (hasReceipt) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error: This receipt has already been read.'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            } else {
+              await ReceiptsDatabase().insertReceipt(url);
+              await sendUrlToServer(url);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Receipt saved successfully.'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            }
           }
         },
-        tooltip: 'Scan QR Code',
-        child: const Icon(Icons.qr_code_scanner),
+        child: Icon(Icons.qr_code),
       ),
     );
   }
