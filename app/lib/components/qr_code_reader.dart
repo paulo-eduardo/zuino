@@ -37,21 +37,20 @@ class _QRCodeReaderState extends State<QRCodeReader> {
               borderLength: 30,
               borderWidth: 10,
               cutOutSize: 300,
+              overlayColor: Colors.black.withOpacity(0.8), // Semi-transparent overlay
             ),
           ),
-          Container(
-            color: Colors.black54.withOpacity(0.5),
-          ),
           Positioned(
-            bottom: 50,
-            left: MediaQuery.of(context).size.width / 2 - 25,
-            child: IconButton(
-              icon: Icon(
-                isFlashOn ? Icons.flash_off : Icons.flash_on,
-                color: Colors.white,
-                size: 50,
-              ),
+            bottom: MediaQuery.of(context).size.height * 0.1, // Adjust the bottom position dynamically
+            left: MediaQuery.of(context).size.width / 2 - 28, // Adjust the left position dynamically
+            child: FloatingActionButton(
               onPressed: _toggleFlash,
+              backgroundColor: Colors.white,
+              child: Icon(
+                isFlashOn ? Icons.flashlight_off : Icons.flashlight_on, // Use flashlight icons
+                color: Colors.black,
+                size: 30,
+              ),
             ),
           ),
         ],

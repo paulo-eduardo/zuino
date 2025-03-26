@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:mercadinho/components/qr_code_reader.dart';
 import 'package:mercadinho/components/product_icon.dart';
 import 'package:mercadinho/database/receipts_database.dart';
@@ -90,6 +91,18 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  void _showToast(String message, Color backgroundColor) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_LONG, // Change to LONG to make the toast live longer
+      gravity: ToastGravity.TOP,
+      timeInSecForIosWeb: 2, // Increase the duration for iOS
+      backgroundColor: backgroundColor,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -126,21 +139,11 @@ class _MyHomePageState extends State<MyHomePage> {
             final url = result.toString();
             final hasReceipt = await ReceiptsDatabase().hasReceipt(url);
             if (hasReceipt) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Error: This receipt has already been read.'),
-                  backgroundColor: Colors.red,
-                ),
-              );
+              _showToast('Erro: Este recibo já foi lido.', Colors.red);
             } else {
               await ReceiptsDatabase().insertReceipt(url);
               await sendUrlToServer(url);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Receipt saved successfully.'),
-                  backgroundColor: Colors.green,
-                ),
-              );
+              _showToast('Recibo salvo com sucesso.', Colors.green);
             }
           }
         },
