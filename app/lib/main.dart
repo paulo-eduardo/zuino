@@ -128,39 +128,47 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ],
       ),
-      body: GridView.builder(
-        padding: const EdgeInsets.all(8.0),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 1, // Change aspect ratio to make items square
-          crossAxisSpacing: 8.0,
-          mainAxisSpacing: 8.0,
-        ),
-        itemCount: products.length,
-        itemBuilder: (context, index) {
-          final product = products[index];
-          return GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ProductDetailScreen(
-                    name: product['name'],
-                    unit: product['unit'],
-                    unitValue: product['unitValue'],
-                    quantity: product['quantity'],
-                    total: product['unitValue'] * product['quantity'],
-                  ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final additionalPadding = constraints.maxHeight * 0.05; // 5% of screen height
+          return GridView.builder(
+            padding: EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 80.0 + additionalPadding), // Add dynamic bottom padding
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 1, // Change aspect ratio to make items square
+              crossAxisSpacing: 8.0,
+              mainAxisSpacing: 8.0,
+            ),
+            itemCount: products.length,
+            itemBuilder: (context, index) {
+              final product = products[index];
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProductDetailScreen(
+                        name: product['name'],
+                        unit: product['unit'],
+                        unitValue: product['unitValue'],
+                        quantity: product['quantity'],
+                        total: product['unitValue'] * product['quantity'],
+                      ),
+                    ),
+                  );
+                },
+                child: ProductCard(
+                  codigo: product['codigo'], // Use codigo here
+                  name: product['name'],
+                  unit: product['unit'],
+                  unitValue: product['unitValue'],
+                  quantity: product['quantity'],
+                  total: product['unitValue'] * product['quantity'],
+                  used: product['used'] ?? 0,
+                  onStockUpdated: _loadProducts, // Pass the callback to reload products
                 ),
               );
             },
-            child: ProductCard( // Update reference
-              name: product['name'],
-              unit: product['unit'],
-              unitValue: product['unitValue'],
-              quantity: product['quantity'],
-              total: product['unitValue'] * product['quantity'],
-            ),
           );
         },
       ),

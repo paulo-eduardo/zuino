@@ -33,10 +33,17 @@ class ProductsDatabase {
   Future<void> useProduct(String codigo, double amount) async {
     final box = await Hive.openBox('products');
     final product = box.get(codigo);
-
     if (product != null) {
-      product['used'] = (product['used'] ?? 0) + amount;
-      await box.put(codigo, product);
+      final used = (product['used'] ?? 0) + amount;
+      final availableStock = product['quantity'] - used;
+      if (availableStock >= 0) {
+        product['used'] = used;
+        await box.put(codigo, product);
+      } else {
+        throw Exception('Not enough stock to use the requested amount.');
+      }
+    } else {
+      throw Exception('Product not found.');
     }
   }
 }
