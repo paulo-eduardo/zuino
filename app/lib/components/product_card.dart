@@ -46,7 +46,7 @@ class ProductCard extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              'Estoque: ${quantity - used} $unit', // Update to show quantity - used
+              'Estoque: ${(quantity - used).toStringAsFixed(unit == 'KG' ? 3 : 0)} $unit', // Format stock to 3 decimal places
               style: const TextStyle(color: Colors.white70, fontSize: 12), // Smaller font size
               textAlign: TextAlign.center,
             ),
@@ -90,10 +90,50 @@ class ProductCard extends StatelessWidget {
                     final stockBefore = quantity - used;
 
                     if (unit == 'KG') {
-                      // Show a toast message for products with unit 'kg'
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Não é possível gastar produtos com unidade em kg')),
+                      // Show a modal for entering the amount in kg
+                      final amountToSpend = await showDialog<double>(
+                        context: context,
+                        builder: (context) {
+                          final controller = TextEditingController(
+                            text: stockBefore.toStringAsFixed(3), // Default value
+                          );
+                          return AlertDialog(
+                            title: const Text('Gastar em KG'),
+                            content: TextField(
+                              controller: controller,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              decoration: const InputDecoration(
+                                labelText: 'Quantidade em KG',
+                                hintText: 'Ex: 1.234',
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, null), // Cancel
+                                child: const Text('Cancelar'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  final value = double.tryParse(controller.text);
+                                  if (value != null && value > 0 && value <= stockBefore) {
+                                    Navigator.pop(context, value); // Confirm
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Quantidade inválida')),
+                                    );
+                                  }
+                                },
+                                child: const Text('Confirmar'),
+                              ),
+                            ],
+                          );
+                        },
                       );
+
+                      if (amountToSpend != null) {
+                        await productsDb.useProduct(codigo, amountToSpend); // Deduct the entered amount
+                        onStockUpdated(); // Notify parent to refresh UI
+                      }
                     } else {
                       if (stockBefore >= 1) {
                         await productsDb.useProduct(codigo, 1); // Deduct 1 unit
