@@ -24,9 +24,22 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.grey),
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF2C2C2C), // Neutral dark tone
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF2C2C2C), // Same neutral dark tone for the header
+          elevation: 0, // Flat design
+        ),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.grey,
+          brightness: Brightness.dark,
+        ),
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(color: Colors.white),
+          bodyMedium: TextStyle(color: Colors.white),
+        ),
       ),
-      home: const MyHomePage(title: 'Home'),
+      home: const MyHomePage(title: 'Dispensa'),
     );
   }
 }
@@ -107,7 +120,18 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Align(
+          alignment: Alignment.centerLeft,
+          child: Text(widget.title),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.account_circle),
+            onPressed: () {
+              // Add functionality for avatar icon if needed
+            },
+          ),
+        ],
       ),
       body: GridView.builder(
         padding: const EdgeInsets.all(8.0),
