@@ -143,20 +143,7 @@ class _MyHomePageState extends State<MyHomePage> {
             itemBuilder: (context, index) {
               final product = products[index];
               return GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ProductDetailScreen(
-                        name: product['name'],
-                        unit: product['unit'],
-                        unitValue: product['unitValue'],
-                        quantity: product['quantity'],
-                        total: product['unitValue'] * product['quantity'],
-                      ),
-                    ),
-                  );
-                },
+                behavior: HitTestBehavior.opaque, // Ensure taps are only detected on the card itself
                 child: ProductCard(
                   codigo: product['codigo'], // Use codigo here
                   name: product['name'],
