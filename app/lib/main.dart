@@ -73,12 +73,11 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> sendUrlToServer(String url) async {
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.68.105:3000/receipt/scan'),
+        Uri.parse('http://192.168.68.100:3000/receipt/scan'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'url': url}),
       );
       if (response.statusCode == 200) {
-        final box = await Hive.openBox('products');
         final productList = (jsonDecode(response.body) as List).map((product) {
           return {
             'codigo': product['codigo'],
@@ -89,19 +88,14 @@ class _MyHomePageState extends State<MyHomePage> {
             'used': 0.0,
           };
         }).toList();
-        for (var product in productList) {
-          final existingProduct = box.get(product['codigo']);
-          if (existingProduct != null) {
-            product['quantity'] += existingProduct['quantity'];
-          }
-          box.put(product['codigo'], product);
-        }
+        await ProductsDatabase().saveProducts(productList);
         _loadProducts();
+        _showToast('Recibo salvo com sucesso.', Colors.green);
       } else {
-        print('Failed to send URL to server');
+        _showToast('Erro: Falha ao conectar ao servidor.', Colors.red);
       }
     } catch (e) {
-      print('Error sending URL to server: $e');
+      _showToast('Erro: Falha ao conectar ao servidor.', Colors.red);
     }
   }
 
@@ -182,9 +176,11 @@ class _MyHomePageState extends State<MyHomePage> {
             if (hasReceipt) {
               _showToast('Erro: Este recibo já foi lido.', Colors.red);
             } else {
-              await ReceiptsDatabase().insertReceipt(url);
+              // Save receipt only if backend request is successful
               await sendUrlToServer(url);
-              _showToast('Recibo salvo com sucesso.', Colors.green);
+              if (await ReceiptsDatabase().hasReceipt(url)) {
+                await ReceiptsDatabase().insertReceipt(url);
+              }
             }
           }
         },

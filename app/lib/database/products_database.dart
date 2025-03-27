@@ -15,4 +15,18 @@ class ProductsDatabase {
     final box = await Hive.openBox('products');
     return box.values.toList().cast<Map<String, dynamic>>();
   }
+
+  Future<void> saveProducts(List<Map<String, dynamic>> productList) async {
+    final box = await Hive.openBox('products');
+    for (var product in productList) {
+      if (!product.containsKey('codigo')) {
+        continue;
+      }
+      final existingProduct = box.get(product['codigo']);
+      if (existingProduct != null) {
+        product['quantity'] += existingProduct['quantity'];
+      }
+      await box.put(product['codigo'], product);
+    }
+  }
 }
