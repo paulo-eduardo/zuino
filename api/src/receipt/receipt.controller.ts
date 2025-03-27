@@ -8,6 +8,4 @@ export async function getReceiptItems(req: Request, res: Response) {
 
   const receiptItems = await receiptService.getReceiptItems(url);
   res.status(200).send(receiptItems);
-  console.log("Items: ", receiptItems);
-  return;
 }
