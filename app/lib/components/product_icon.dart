@@ -38,7 +38,7 @@ class ProductIcon extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '\$${total.toStringAsFixed(2)}',
+            'R\$ ${total.toStringAsFixed(2).replaceAll('.', ',')}',
             style: const TextStyle(color: Colors.white, fontSize: 14),
             textAlign: TextAlign.center,
           ),

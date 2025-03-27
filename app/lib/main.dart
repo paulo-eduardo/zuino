@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:mercadinho/screens/product_detail_screen.dart'; // Add this import
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -144,12 +145,28 @@ class _MyHomePageState extends State<MyHomePage> {
         itemCount: products.length,
         itemBuilder: (context, index) {
           final product = products[index];
-          return ProductIcon(
-            name: product['name'],
-            unit: product['unit'],
-            unitValue: product['unitValue'],
-            quantity: product['quantity'],
-            total: product['unitValue'] * product['quantity'],
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProductDetailScreen(
+                    name: product['name'],
+                    unit: product['unit'],
+                    unitValue: product['unitValue'],
+                    quantity: product['quantity'],
+                    total: product['unitValue'] * product['quantity'],
+                  ),
+                ),
+              );
+            },
+            child: ProductIcon(
+              name: product['name'],
+              unit: product['unit'],
+              unitValue: product['unitValue'],
+              quantity: product['quantity'],
+              total: product['unitValue'] * product['quantity'],
+            ),
           );
         },
       ),
