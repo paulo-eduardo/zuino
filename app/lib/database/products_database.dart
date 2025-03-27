@@ -29,4 +29,14 @@ class ProductsDatabase {
       await box.put(product['codigo'], product);
     }
   }
+
+  Future<void> useProduct(String codigo, double amount) async {
+    final box = await Hive.openBox('products');
+    final product = box.get(codigo);
+
+    if (product != null) {
+      product['used'] = (product['used'] ?? 0) + amount;
+      await box.put(codigo, product);
+    }
+  }
 }
