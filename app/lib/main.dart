@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:mercadinho/components/qr_code_reader.dart';
-import 'package:mercadinho/components/product_icon.dart';
+import 'package:mercadinho/components/product_card.dart'; // Update import
 import 'package:mercadinho/database/receipts_database.dart';
 import 'package:mercadinho/database/products_database.dart';
 import 'package:http/http.dart' as http;
@@ -138,7 +138,7 @@ class _MyHomePageState extends State<MyHomePage> {
         padding: const EdgeInsets.all(8.0),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          childAspectRatio: 3 / 2,
+          childAspectRatio: 1, // Change aspect ratio to make items square
           crossAxisSpacing: 8.0,
           mainAxisSpacing: 8.0,
         ),
@@ -160,7 +160,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               );
             },
-            child: ProductIcon(
+            child: ProductCard( // Update reference
               name: product['name'],
               unit: product['unit'],
               unitValue: product['unitValue'],
