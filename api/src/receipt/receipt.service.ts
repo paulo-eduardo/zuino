@@ -12,7 +12,12 @@ export async function getReceiptItems(url: string): Promise<ReceiptItem[]> {
   $("#tabResult tr").each((i, element) => {
     const row = $(element);
     const name = row.find(".txtTit2").text();
-    const unit = row.find(".RUN").text().replace("UN:", "").trim();
+    const unit = row
+      .find(".RUN")
+      .text()
+      .replace("UN:", "")
+      .trim()
+      .toLowerCase();
     const unitValueText = row
       .find(".RvlUnit")
       .text()
@@ -34,7 +39,9 @@ export async function getReceiptItems(url: string): Promise<ReceiptItem[]> {
       const total = parseFloat(totalText.replace(",", "."));
 
       if (receiptItemsMap[compositeKey]) {
-        receiptItemsMap[compositeKey].quantity += quantity;
+        const currentQuantity = receiptItemsMap[compositeKey].quantity;
+        receiptItemsMap[compositeKey].quantity =
+          Math.round((currentQuantity + quantity) * 1000) / 1000;
         receiptItemsMap[compositeKey].total += total;
       } else {
         receiptItemsMap[compositeKey] = {

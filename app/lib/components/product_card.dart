@@ -65,7 +65,7 @@ class ProductCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Estoque: ${(quantity - used).toStringAsFixed(unit == 'KG' ? 3 : 0)} $unit', // Format stock to 3 decimal places
+                'Estoque: ${(quantity - used).toStringAsFixed(unit == 'kg' ? 3 : 0)} $unit', // Format stock to 3 decimal places
                 style: const TextStyle(color: Colors.white70, fontSize: 12), // Smaller font size
                 textAlign: TextAlign.center,
               ),
@@ -111,7 +111,7 @@ class ProductCard extends StatelessWidget {
                             final productsDb = ProductsDatabase();
                             final stockBefore = quantity - used;
 
-                            if (unit == 'KG') {
+                            if (unit == 'kg') {
                               // Show a modal for entering the amount in kg
                               final amountToSpend = await showDialog<double>(
                                 context: context,

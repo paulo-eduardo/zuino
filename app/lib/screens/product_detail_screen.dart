@@ -39,7 +39,7 @@ class ProductDetailScreen extends StatelessWidget {
             Text('Preço Unitário: R\$ ${unitValue.toStringAsFixed(2).replaceAll('.', ',')}'),
             Text('Quantidade Total: $quantity $unit'), // Add quantity
             Text('Quantidade Usada: $used $unit'), // Add used
-            Text('Estoque Disponível: ${(quantity - used).toStringAsFixed(unit == 'KG' ? 3 : 0)} $unit'), // Add stock
+            Text('Estoque Disponível: ${(quantity - used).toStringAsFixed(unit == 'kg' ? 3 : 0)} $unit'), // Add stock
             const SizedBox(height: 16),
             Text(
               'Total: R\$ ${total.toStringAsFixed(2).replaceAll('.', ',')}',
