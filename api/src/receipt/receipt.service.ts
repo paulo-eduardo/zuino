@@ -33,18 +33,17 @@ export async function getReceiptItems(url: string): Promise<ReceiptItem[]> {
     const codigo = codigoMatch ? codigoMatch[1] : `unknown_${i}`;
 
     if (name) {
-      const compositeKey = getCompositeKey(name, unitValueText);
       const unitValue = parseFloat(unitValueText.replace(",", "."));
       const quantity = parseFloat(quantityText.replace(",", "."));
       const total = parseFloat(totalText.replace(",", "."));
 
-      if (receiptItemsMap[compositeKey]) {
-        const currentQuantity = receiptItemsMap[compositeKey].quantity;
-        receiptItemsMap[compositeKey].quantity =
+      if (receiptItemsMap[codigo]) {
+        const currentQuantity = receiptItemsMap[codigo].quantity;
+        receiptItemsMap[codigo].quantity =
           Math.round((currentQuantity + quantity) * 1000) / 1000;
-        receiptItemsMap[compositeKey].total += total;
+        receiptItemsMap[codigo].total += total;
       } else {
-        receiptItemsMap[compositeKey] = {
+        receiptItemsMap[codigo] = {
           codigo,
           name,
           store,
@@ -58,11 +57,4 @@ export async function getReceiptItems(url: string): Promise<ReceiptItem[]> {
   });
 
   return Object.values(receiptItemsMap);
-}
-
-function getCompositeKey(name: string, unitValue: string): string {
-  const normalizedName = name.trim().toLowerCase().replace(/\s+/g, " ");
-
-  const normalizeUnitValue = unitValue.replace(",", ".");
-  return `${normalizedName}_${normalizeUnitValue}`;
 }
