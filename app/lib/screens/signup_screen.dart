@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:mercadinho/models/app_user_info.dart'; // Update import
+import 'package:mercadinho/screens/stock_screen.dart'; // Import the correct StockScreen
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({Key? key}) : super(key: key);
@@ -14,49 +16,33 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController _passwordController = TextEditingController();
   bool _isPasswordVisible = false; // Add a variable to track password visibility
 
-  Future<void> _signUp() async {
+  Future<void> _signUpWithEmail() async {
     try {
-      final name = _nameController.text.trim();
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
-
-      if (name.isEmpty || email.isEmpty || password.isEmpty) {
+      final name = _nameController.text.trim();
+      if (email.isEmpty || password.isEmpty || name.isEmpty) {
         _showErrorToast('Por favor, preencha todos os campos.');
         return;
       }
-
       final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-
-      // Update the user's display name
       final user = userCredential.user;
       if (user != null) {
         await user.updateDisplayName(name);
-        print('Usuário salvo: ${user.email}');
+        await user.reload();
+        AppUserInfo.updateFromFirebaseUser(user); // Update global user info
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => StockScreen(title: "Estoque de ${AppUserInfo.name}"), // Use global user info
+          ),
+        );
       }
-
-      _showSuccessToast('Conta criada com sucesso!');
-
-      // Navigate back to the main page
-      Navigator.pushReplacementNamed(context, '/');
-    } on FirebaseAuthException catch (e) {
-      print('FirebaseAuthException: ${e.code} - ${e.message}'); // Print error details
-      print('Stack Trace: ${e.stackTrace}'); // Print stack trace for debugging
-      if (e.code == 'email-already-in-use') {
-        _showErrorToast('O e-mail já está em uso.');
-      } else if (e.code == 'weak-password') {
-        _showErrorToast('A senha é muito fraca.');
-      } else if (e.code == 'invalid-email') {
-        _showErrorToast('O e-mail é inválido.');
-      } else {
-        _showErrorToast('Erro: ${e.message}');
-      }
-    } catch (e, stackTrace) {
-      print('Unexpected error: $e'); // Print unexpected error details
-      print('Stack Trace: $stackTrace'); // Print stack trace for debugging
-      _showErrorToast('Erro inesperado: $e');
+    } catch (e) {
+      _showErrorToast('Erro ao criar conta: ${e.toString()}');
     }
   }
 
@@ -145,7 +131,7 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
             const SizedBox(height: 40),
             ElevatedButton(
-              onPressed: _signUp, // Call the sign-up method
+              onPressed: _signUpWithEmail, // Call the sign-up method
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue,
                 shape: RoundedRectangleBorder(

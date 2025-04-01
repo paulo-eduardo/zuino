@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:mercadinho/screens/signup_screen.dart'; // Import the signup screen
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:mercadinho/screens/stock_screen.dart'; // Ensure correct StockScreen import
+import 'package:mercadinho/models/app_user_info.dart'; // Update import
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -33,18 +35,16 @@ class _LoginScreenState extends State<LoginScreen> {
         password: password,
       );
 
-      _showSuccessToast('Login realizado com sucesso!');
-      print('Usuário logado: ${userCredential.user?.email}'); // Debugging: Print logged-in user email
-
-      // Save the user instance
       final user = userCredential.user;
-      print('User: $user'); // Debugging: Print user instance
       if (user != null) {
-        print('Usuário salvo: ${user.email}');
+        AppUserInfo.updateFromFirebaseUser(user); // Update global user info
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => StockScreen(title: "Estoque de ${AppUserInfo.name}"), // Use global user info
+          ),
+        );
       }
-
-      // Navigate back to the main page
-      Navigator.pushReplacementNamed(context, '/');
     } on FirebaseAuthException catch (e) {
       print('FirebaseAuthException: ${e.code} - ${e.message}'); // Print error details
       if (e.code == 'user-not-found') {
