@@ -12,9 +12,15 @@ import 'package:mercadinho/screens/product_detail_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Import FirebaseAuth
 import 'package:mercadinho/screens/login_screen.dart'; // Import the new login screen
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // Import dotenv
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await dotenv.load(fileName: ".env"); // Explicitly specify the file name
+  } catch (e) {
+    print("Error loading .env file: $e");
+  }
   final appDocumentDir = await getApplicationDocumentsDirectory();
   Hive.init(appDocumentDir.path);
   await Firebase.initializeApp();
@@ -78,7 +84,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> sendUrlToServer(String url) async {
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.68.105:3000/receipt/scan'),
+        Uri.parse('${dotenv.env['API_BASE_URL']}/receipt/scan'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'url': url}),
       );
