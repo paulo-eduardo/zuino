@@ -8,12 +8,15 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:mercadinho/screens/product_detail_screen.dart'; // Add this import
+import 'package:mercadinho/screens/product_detail_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:mercadinho/screens/login_screen.dart'; // Import the new login screen
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final appDocumentDir = await getApplicationDocumentsDirectory();
   Hive.init(appDocumentDir.path);
+  await Firebase.initializeApp(); 
   runApp(const MyApp());
 }
 
@@ -73,7 +76,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> sendUrlToServer(String url) async {
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.68.100:3000/receipt/scan'),
+        Uri.parse('http://192.168.68.105:3000/receipt/scan'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'url': url}),
       );
@@ -123,7 +126,10 @@ class _MyHomePageState extends State<MyHomePage> {
           IconButton(
             icon: const Icon(Icons.account_circle),
             onPressed: () {
-              // Add functionality for avatar icon if needed
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+              );
             },
           ),
         ],
