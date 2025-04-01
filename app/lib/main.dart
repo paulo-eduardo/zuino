@@ -10,13 +10,15 @@ import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:mercadinho/screens/product_detail_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Import FirebaseAuth
 import 'package:mercadinho/screens/login_screen.dart'; // Import the new login screen
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final appDocumentDir = await getApplicationDocumentsDirectory();
   Hive.init(appDocumentDir.path);
-  await Firebase.initializeApp(); 
+  await Firebase.initializeApp();
+  FirebaseAuth.instance.setSettings(appVerificationDisabledForTesting: true); // Enable verbose logging
   runApp(const MyApp());
 }
 
@@ -43,7 +45,7 @@ class MyApp extends StatelessWidget {
           bodyMedium: TextStyle(color: Colors.white),
         ),
       ),
-      home: const MyHomePage(title: 'Dispensa'),
+      home: const MyHomePage(title: 'Dispensa')
     );
   }
 }
