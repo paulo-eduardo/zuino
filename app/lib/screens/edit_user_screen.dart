@@ -98,14 +98,14 @@ class _EditUserScreenState extends State<EditUserScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Stack(
-              alignment: Alignment.bottomCenter,
+              alignment: Alignment.center,
               children: [
                 Container(
-                  width: 120,
-                  height: 120,
+                  width: 250, // Avatar size
+                  height: 250, // Avatar size
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.blue, width: 2),
+                    border: Border.all(color: Colors.blue, width: 3), // Thicker border
                   ),
                   child: ClipOval(
                     child: _avatarFile != null
@@ -118,21 +118,14 @@ class _EditUserScreenState extends State<EditUserScreen> {
                         : Image.asset('assets/default_avatar.png', fit: BoxFit.cover),
                   ),
                 ),
-                Container(
-                  width: 120,
-                  decoration: BoxDecoration(
-                    color: Colors.black54,
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(60),
-                      bottomRight: Radius.circular(60),
-                    ),
-                  ),
-                  child: TextButton(
+                Positioned(
+                  bottom: 10, // Position the button at the bottom-right corner
+                  right: 10,
+                  child: FloatingActionButton(
                     onPressed: _updateAvatar,
-                    child: const Text(
-                      'Atualizar',
-                      style: TextStyle(color: Colors.white),
-                    ),
+                    mini: true, // Smaller button
+                    backgroundColor: Colors.blue,
+                    child: const Icon(Icons.edit, color: Colors.white, size: 20), // Pencil icon
                   ),
                 ),
               ],
