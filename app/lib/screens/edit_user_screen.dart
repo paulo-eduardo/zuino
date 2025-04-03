@@ -89,9 +89,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Editar Perfil'),
-      ),
+      appBar: AppBar(title: const Text('Editar Perfil')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -105,17 +103,26 @@ class _EditUserScreenState extends State<EditUserScreen> {
                   height: 250, // Avatar size
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.blue, width: 3), // Thicker border
+                    border: Border.all(
+                      color: Colors.blue,
+                      width: 3,
+                    ), // Thicker border
                   ),
                   child: ClipOval(
-                    child: _avatarFile != null
-                        ? Image.file(
-                            _avatarFile!,
-                            fit: BoxFit.cover,
-                            key: ValueKey('avatar_${_avatarManager.timestamp}'),
-                            gaplessPlayback: false,
-                          )
-                        : Image.asset('assets/default_avatar.png', fit: BoxFit.cover),
+                    child:
+                        _avatarFile != null
+                            ? Image.file(
+                              _avatarFile!,
+                              fit: BoxFit.cover,
+                              key: ValueKey(
+                                'avatar_${_avatarManager.timestamp}',
+                              ),
+                              gaplessPlayback: false,
+                            )
+                            : Image.asset(
+                              'assets/default_avatar.png',
+                              fit: BoxFit.cover,
+                            ),
                   ),
                 ),
                 Positioned(
@@ -125,7 +132,11 @@ class _EditUserScreenState extends State<EditUserScreen> {
                     onPressed: _updateAvatar,
                     mini: true, // Smaller button
                     backgroundColor: Colors.blue,
-                    child: const Icon(Icons.edit, color: Colors.white, size: 20), // Pencil icon
+                    child: const Icon(
+                      Icons.edit,
+                      color: Colors.white,
+                      size: 20,
+                    ), // Pencil icon
                   ),
                 ),
               ],
