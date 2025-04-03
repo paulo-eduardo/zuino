@@ -11,6 +11,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:mercadinho/screens/edit_user_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+import 'package:mercadinho/models/avatar_manager.dart';
 
 class StockScreen extends StatefulWidget {
   const StockScreen({super.key, required this.title});
@@ -23,11 +26,33 @@ class StockScreen extends StatefulWidget {
 
 class _StockScreenState extends State<StockScreen> {
   List<dynamic> products = [];
+  File? _avatarFile;
+  final _avatarManager = AvatarManager();
 
   @override
   void initState() {
     super.initState();
     _loadProducts();
+    _avatarManager.loadAvatar();
+    _avatarManager.addListener(_onAvatarChanged);
+  }
+
+  @override
+  void dispose() {
+    _avatarManager.removeListener(_onAvatarChanged);
+    super.dispose();
+  }
+
+  void _onAvatarChanged() {
+    print('🔄 StockScreen._onAvatarChanged called');
+    if (mounted) {
+      setState(() {
+        _avatarFile = _avatarManager.avatarFile;
+      });
+      print('✅ StockScreen state updated with new avatar');
+    } else {
+      print('⚠️ StockScreen not mounted, skipping update');
+    }
   }
 
   Future<void> _loadProducts() async {
@@ -109,18 +134,26 @@ class _StockScreenState extends State<StockScreen> {
                       ),
                     ),
                     child: CircleAvatar(
+                      key: ValueKey('avatar_${_avatarManager.timestamp}'),
                       radius: 20,
-                      backgroundImage: AssetImage('assets/default_avatar.png'),
+                      backgroundImage: _avatarFile != null
+                          ? FileImage(_avatarFile!, scale: 1.0)
+                          : AssetImage('assets/default_avatar.png') as ImageProvider,
                     ),
                   ),
                   offset: const Offset(0, 50),
                   onSelected: (value) async {
                     if (value == 'Editar') {
-                      Navigator.push(
+                      final result = await Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => const EditUserScreen()),
                       );
+                      if (result == true) {
+                        // Reload avatar when returning from edit screen
+                        _avatarManager.loadAvatar();
+                      }
                     } else if (value == 'Sair') {
+                      await _avatarManager.clearAvatar();
                       await FirebaseAuth.instance.signOut();
                       Fluttertoast.showToast(
                         msg: 'Você saiu com sucesso.',
