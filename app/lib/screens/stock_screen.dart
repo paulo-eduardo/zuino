@@ -11,7 +11,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:mercadinho/screens/edit_user_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:mercadinho/models/avatar_manager.dart';
 
@@ -44,14 +43,10 @@ class _StockScreenState extends State<StockScreen> {
   }
 
   void _onAvatarChanged() {
-    print('🔄 StockScreen._onAvatarChanged called');
     if (mounted) {
       setState(() {
         _avatarFile = _avatarManager.avatarFile;
       });
-      print('✅ StockScreen state updated with new avatar');
-    } else {
-      print('⚠️ StockScreen not mounted, skipping update');
     }
   }
 
@@ -70,16 +65,17 @@ class _StockScreenState extends State<StockScreen> {
         body: jsonEncode({'url': url}),
       );
       if (response.statusCode == 200) {
-        final productList = (jsonDecode(response.body) as List).map((product) {
-          return {
-            'codigo': product['codigo'],
-            'name': product['name'],
-            'unit': product['unit'],
-            'unitValue': double.parse(product['unitValue'].toString()),
-            'quantity': double.parse(product['quantity'].toString()),
-            'used': 0.0,
-          };
-        }).toList();
+        final productList =
+            (jsonDecode(response.body) as List).map((product) {
+              return {
+                'codigo': product['codigo'],
+                'name': product['name'],
+                'unit': product['unit'],
+                'unitValue': double.parse(product['unitValue'].toString()),
+                'quantity': double.parse(product['quantity'].toString()),
+                'used': 0.0,
+              };
+            }).toList();
         await ProductsDatabase().saveProducts(productList);
         _loadProducts();
         _showToast('Recibo salvo com sucesso.', Colors.green);
@@ -106,7 +102,8 @@ class _StockScreenState extends State<StockScreen> {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
-    final screenTitle = user != null ? "Estoque de ${user.displayName}" : "Estoque";
+    final screenTitle =
+        user != null ? "Estoque de ${user.displayName}" : "Estoque";
 
     return Scaffold(
       appBar: AppBar(
@@ -128,17 +125,16 @@ class _StockScreenState extends State<StockScreen> {
                     margin: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.blue,
-                        width: 2,
-                      ),
+                      border: Border.all(color: Colors.blue, width: 2),
                     ),
                     child: CircleAvatar(
                       key: ValueKey('avatar_${_avatarManager.timestamp}'),
                       radius: 20,
-                      backgroundImage: _avatarFile != null
-                          ? FileImage(_avatarFile!, scale: 1.0)
-                          : AssetImage('assets/default_avatar.png') as ImageProvider,
+                      backgroundImage:
+                          _avatarFile != null
+                              ? FileImage(_avatarFile!, scale: 1.0)
+                              : AssetImage('assets/default_avatar.png')
+                                  as ImageProvider,
                     ),
                   ),
                   offset: const Offset(0, 50),
@@ -146,7 +142,9 @@ class _StockScreenState extends State<StockScreen> {
                     if (value == 'Editar') {
                       final result = await Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const EditUserScreen()),
+                        MaterialPageRoute(
+                          builder: (context) => const EditUserScreen(),
+                        ),
                       );
                       if (result == true) {
                         // Reload avatar when returning from edit screen
@@ -163,23 +161,23 @@ class _StockScreenState extends State<StockScreen> {
                       setState(() {});
                     }
                   },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'Editar',
-                      child: Text('Editar'),
-                    ),
-                    const PopupMenuItem(
-                      value: 'Sair',
-                      child: Text('Sair'),
-                    ),
-                  ],
+                  itemBuilder:
+                      (context) => [
+                        const PopupMenuItem(
+                          value: 'Editar',
+                          child: Text('Editar'),
+                        ),
+                        const PopupMenuItem(value: 'Sair', child: Text('Sair')),
+                      ],
                 );
               } else {
                 return GestureDetector(
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const LoginScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const LoginScreen(),
+                      ),
                     );
                   },
                   child: Container(
@@ -200,7 +198,12 @@ class _StockScreenState extends State<StockScreen> {
         builder: (context, constraints) {
           final additionalPadding = constraints.maxHeight * 0.05;
           return GridView.builder(
-            padding: EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 80.0 + additionalPadding),
+            padding: EdgeInsets.fromLTRB(
+              8.0,
+              8.0,
+              8.0,
+              80.0 + additionalPadding,
+            ),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               childAspectRatio: 1,

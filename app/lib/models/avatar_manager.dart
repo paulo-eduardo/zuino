@@ -5,14 +5,14 @@ import 'package:path_provider/path_provider.dart';
 class AvatarManager extends ChangeNotifier {
   static final AvatarManager _instance = AvatarManager._internal();
   factory AvatarManager() => _instance;
-  
+
   AvatarManager._internal() {
     // Clean up on initialization
     _cleanupOldAvatars();
   }
 
   File? _avatarFile;
-  File? get avatarFile => _avatarFile; 
+  File? get avatarFile => _avatarFile;
 
   String get avatarPath => _avatarFile?.path ?? '';
   String get timestamp => _avatarFile?.path ?? DateTime.now().toIso8601String();
@@ -23,25 +23,25 @@ class AvatarManager extends ChangeNotifier {
   }
 
   Future<void> _cleanupOldAvatars() async {
-    print('🧹 Starting avatar cleanup');
     final avatarDir = Directory(await _getAvatarDirectory());
-    
+
     if (await avatarDir.exists()) {
       final files = await avatarDir.list().toList();
-      
+
       // Sort files by last modified time to keep the most recent
-      files.sort((a, b) => File(b.path).lastModifiedSync().compareTo(File(a.path).lastModifiedSync()));
-      
+      files.sort(
+        (a, b) => File(
+          b.path,
+        ).lastModifiedSync().compareTo(File(a.path).lastModifiedSync()),
+      );
+
       // Keep only the most recent file
       for (var i = 1; i < files.length; i++) {
         try {
           await files[i].delete();
-          print('🗑️ Deleted old avatar: ${files[i].path}');
-        } catch (e) {
-          print('⚠️ Failed to delete old avatar: ${files[i].path}');
-        }
+        } catch (e) {}
       }
-      
+
       // Update current avatar file if needed
       if (files.isNotEmpty && _avatarFile?.path != files.first.path) {
         _avatarFile = File(files.first.path);
@@ -51,23 +51,20 @@ class AvatarManager extends ChangeNotifier {
   }
 
   Future<void> loadAvatar() async {
-    print('🔄 AvatarManager.loadAvatar called');
     final avatarDir = Directory(await _getAvatarDirectory());
-    
+
     if (await avatarDir.exists()) {
       final files = await avatarDir.list().toList();
       if (files.isNotEmpty) {
         _avatarFile = File(files.first.path);
-        print('✅ Avatar file found at: ${_avatarFile?.path}');
         notifyListeners();
       }
     }
   }
 
   Future<void> updateAvatar(File newFile) async {
-    print('🔄 AvatarManager.updateAvatar called with file: ${newFile.path}');
     final avatarDir = Directory(await _getAvatarDirectory());
-    
+
     try {
       // Create avatars directory if it doesn't exist
       if (!await avatarDir.exists()) {
@@ -77,36 +74,26 @@ class AvatarManager extends ChangeNotifier {
       // Generate unique filename
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final newPath = '${avatarDir.path}/avatar_$timestamp.jpg';
-      
+
       // Copy new file
       _avatarFile = await newFile.copy(newPath);
-      print('✅ Avatar successfully updated at: ${_avatarFile?.path}');
-      
+
       // Clean up old avatar files
       await _cleanupOldAvatars();
-      
+
       notifyListeners();
-      print('✅ Listeners notified of avatar update');
-    } catch (e) {
-      print('❌ Error updating avatar: $e');
-      print('❌ Source file exists: ${await newFile.exists()}');
-      print('❌ Target directory writable: ${await avatarDir.exists()}');
-    }
+    } catch (e) {}
   }
 
   Future<void> clearAvatar() async {
-    print('🧹 Clearing avatar on logout');
     final avatarDir = Directory(await _getAvatarDirectory());
-    
+
     if (await avatarDir.exists()) {
       try {
         await avatarDir.delete(recursive: true);
-        print('✅ Avatar directory cleared');
-      } catch (e) {
-        print('❌ Error clearing avatar directory: $e');
-      }
+      } catch (e) {}
     }
-    
+
     _avatarFile = null;
     notifyListeners();
   }

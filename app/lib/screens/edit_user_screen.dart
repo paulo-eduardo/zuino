@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:mercadinho/models/avatar_manager.dart';
 import 'package:mercadinho/components/avatar_preview.dart';
 
 class EditUserScreen extends StatefulWidget {
-  const EditUserScreen({Key? key}) : super(key: key);
+  const EditUserScreen({super.key});
 
   @override
   State<EditUserScreen> createState() => _EditUserScreenState();
@@ -24,7 +23,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
   void initState() {
     super.initState();
     if (_user != null) {
-      _nameController.text = _user!.displayName ?? '';
+      _nameController.text = _user.displayName ?? '';
       _avatarManager.loadAvatar();
       _avatarManager.addListener(_onAvatarChanged);
     }
@@ -37,20 +36,16 @@ class _EditUserScreenState extends State<EditUserScreen> {
   }
 
   void _onAvatarChanged() {
-    print('🔄 EditUserScreen._onAvatarChanged called');
     setState(() {
       _avatarFile = _avatarManager.avatarFile;
     });
-    print('✅ EditUserScreen state updated with new avatar');
   }
 
   Future<void> _updateAvatar() async {
-    print('🔄 EditUserScreen._updateAvatar called');
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
     if (image != null) {
-      print('✅ Image selected: ${image.path}');
       final selectedFile = File(image.path);
       final result = await Navigator.push(
         context,
@@ -65,11 +60,6 @@ class _EditUserScreenState extends State<EditUserScreen> {
               ),
         ),
       );
-      if (result == true) {
-        print('✅ Avatar update completed via preview');
-      }
-    } else {
-      print('⚠️ No image selected');
     }
   }
 

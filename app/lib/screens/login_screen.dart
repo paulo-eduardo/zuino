@@ -6,7 +6,7 @@ import 'package:mercadinho/screens/stock_screen.dart'; // Ensure correct StockSc
 import 'package:mercadinho/models/app_user_info.dart'; // Update import
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -14,11 +14,13 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController(); // Add password controller
+  final TextEditingController _passwordController =
+      TextEditingController(); // Add password controller
   final FocusNode _emailFocusNode = FocusNode();
   final FocusNode _passwordFocusNode = FocusNode();
   bool _showPasswordField = false;
-  bool _isPasswordVisible = false; // Add a variable to track password visibility
+  bool _isPasswordVisible =
+      false; // Add a variable to track password visibility
 
   Future<void> _signInWithEmail() async {
     try {
@@ -30,10 +32,8 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      final userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
 
       final user = userCredential.user;
       if (user != null) {
@@ -41,12 +41,14 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => StockScreen(title: "Estoque de ${AppUserInfo.name}"), // Use global user info
+            builder:
+                (context) => StockScreen(
+                  title: "Estoque de ${AppUserInfo.name}",
+                ), // Use global user info
           ),
         );
       }
     } on FirebaseAuthException catch (e) {
-      print('FirebaseAuthException: ${e.code} - ${e.message}'); // Print error details
       if (e.code == 'user-not-found') {
         _showErrorToast('Usuário não encontrado.');
       } else if (e.code == 'wrong-password') {
@@ -57,20 +59,25 @@ class _LoginScreenState extends State<LoginScreen> {
         _showErrorToast('Erro: ${e.message}');
       }
     } catch (e) {
-      print('Unexpected error: $e'); // Print unexpected error details
       _showErrorToast('Erro inesperado: $e');
     }
   }
 
   void _showErrorToast(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message, style: const TextStyle(color: Colors.white)), backgroundColor: Colors.red),
+      SnackBar(
+        content: Text(message, style: const TextStyle(color: Colors.white)),
+        backgroundColor: Colors.red,
+      ),
     );
   }
 
   void _showSuccessToast(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message, style: const TextStyle(color: Colors.white)), backgroundColor: Colors.green),
+      SnackBar(
+        content: Text(message, style: const TextStyle(color: Colors.white)),
+        backgroundColor: Colors.green,
+      ),
     );
   }
 
@@ -118,8 +125,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _emailController,
                     focusNode: _emailFocusNode,
                     textInputAction: TextInputAction.next,
-                    keyboardType: TextInputType.emailAddress, // Specify email input type
-                    autofillHints: const [AutofillHints.email], // Enable autofill for email
+                    keyboardType:
+                        TextInputType.emailAddress, // Specify email input type
+                    autofillHints: const [
+                      AutofillHints.email,
+                    ], // Enable autofill for email
                     onSubmitted: (_) {
                       FocusScope.of(context).requestFocus(_passwordFocusNode);
                     },
@@ -138,20 +148,27 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: const TextStyle(color: Colors.white),
                   ),
                   Container(
-                    height: 1, // Invisible divider to maintain layout consistency
+                    height:
+                        1, // Invisible divider to maintain layout consistency
                     color: Colors.grey[800],
                   ),
                   TextField(
-                    controller: _passwordController, // Attach password controller
+                    controller:
+                        _passwordController, // Attach password controller
                     focusNode: _passwordFocusNode,
-                    obscureText: !_isPasswordVisible, // Toggle password visibility
+                    obscureText:
+                        !_isPasswordVisible, // Toggle password visibility
                     enabled: _showPasswordField,
-                    autofillHints: const [AutofillHints.password], // Enable autofill for password
+                    autofillHints: const [
+                      AutofillHints.password,
+                    ], // Enable autofill for password
                     decoration: InputDecoration(
                       hintText: 'Senha',
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                          _isPasswordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
                           color: Colors.grey[400],
                         ),
                         onPressed: () {
@@ -184,17 +201,16 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
                 ),
-                child: const Text(
-                  'Entrar',
-                  style: TextStyle(fontSize: 16),
-                ),
+                child: const Text('Entrar', style: TextStyle(fontSize: 16)),
               ),
               const SizedBox(height: 10),
               TextButton(
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const SignupScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const SignupScreen(),
+                    ),
                   );
                 },
                 child: const Text(
