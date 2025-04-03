@@ -133,7 +133,7 @@ class _StockScreenState extends State<StockScreen> {
                       backgroundImage:
                           _avatarFile != null
                               ? FileImage(_avatarFile!, scale: 1.0)
-                              : AssetImage('assets/default_avatar.png')
+                              : const AssetImage('assets/default_avatar.png')
                                   as ImageProvider,
                     ),
                   ),
@@ -182,10 +182,10 @@ class _StockScreenState extends State<StockScreen> {
                   },
                   child: Container(
                     margin: const EdgeInsets.symmetric(horizontal: 12),
-                    child: CircleAvatar(
+                    child: const CircleAvatar(
                       radius: 20,
                       backgroundImage: AssetImage('assets/default_avatar.png'),
-                      backgroundColor: Colors.grey[700],
+                      backgroundColor: Colors.grey,
                     ),
                   ),
                 );
@@ -249,7 +249,7 @@ class _StockScreenState extends State<StockScreen> {
             }
           }
         },
-        child: Icon(Icons.qr_code),
+        child: const Icon(Icons.qr_code),
       ),
     );
   }
