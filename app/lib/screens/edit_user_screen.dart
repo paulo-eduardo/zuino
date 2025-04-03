@@ -47,7 +47,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
 
     if (image != null) {
       final selectedFile = File(image.path);
-      final result = await Navigator.push(
+      await Navigator.push(
         context,
         MaterialPageRoute(
           builder:
@@ -60,6 +60,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
               ),
         ),
       );
+      if (!mounted) return;
     }
   }
 

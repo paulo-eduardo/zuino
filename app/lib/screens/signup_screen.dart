@@ -32,6 +32,7 @@ class _SignupScreenState extends State<SignupScreen> {
       if (user != null) {
         await user.updateDisplayName(name);
         await user.reload();
+        if (!mounted) return;
         AppUserInfo.updateFromFirebaseUser(user); // Update global user info
         Navigator.pushReplacement(
           context,
@@ -53,15 +54,6 @@ class _SignupScreenState extends State<SignupScreen> {
       SnackBar(
         content: Text(message, style: const TextStyle(color: Colors.white)),
         backgroundColor: Colors.red,
-      ),
-    );
-  }
-
-  void _showSuccessToast(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message, style: const TextStyle(color: Colors.white)),
-        backgroundColor: Colors.green,
       ),
     );
   }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mercadinho/screens/product_detail_screen.dart';
 import 'package:mercadinho/database/products_database.dart';
-import 'package:hive/hive.dart'; // Add this import for Hive
 
 class ProductCard extends StatelessWidget {
   final String codigo;
@@ -14,7 +13,7 @@ class ProductCard extends StatelessWidget {
   final VoidCallback onStockUpdated; // Add a callback for stock updates
 
   const ProductCard({
-    Key? key,
+    super.key,
     required this.codigo,
     required this.name,
     required this.unit,
@@ -23,7 +22,7 @@ class ProductCard extends StatelessWidget {
     required this.total,
     required this.used,
     required this.onStockUpdated, // Add the callback to the constructor
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

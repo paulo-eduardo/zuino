@@ -38,6 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final user = userCredential.user;
       if (user != null) {
         AppUserInfo.updateFromFirebaseUser(user); // Update global user info
+        if (!mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -68,15 +69,6 @@ class _LoginScreenState extends State<LoginScreen> {
       SnackBar(
         content: Text(message, style: const TextStyle(color: Colors.white)),
         backgroundColor: Colors.red,
-      ),
-    );
-  }
-
-  void _showSuccessToast(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message, style: const TextStyle(color: Colors.white)),
-        backgroundColor: Colors.green,
       ),
     );
   }

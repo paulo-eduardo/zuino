@@ -146,6 +146,7 @@ class _StockScreenState extends State<StockScreen> {
                           builder: (context) => const EditUserScreen(),
                         ),
                       );
+                      if (!mounted) return;
                       if (result == true) {
                         // Reload avatar when returning from edit screen
                         _avatarManager.loadAvatar();
@@ -158,6 +159,7 @@ class _StockScreenState extends State<StockScreen> {
                         backgroundColor: Colors.green,
                         textColor: Colors.white,
                       );
+                      if (!mounted) return;
                       setState(() {});
                     }
                   },
@@ -236,6 +238,7 @@ class _StockScreenState extends State<StockScreen> {
             context,
             MaterialPageRoute(builder: (context) => QRCodeReader()),
           );
+          if (!mounted) return;
           if (result != null) {
             final url = result.toString();
             final hasReceipt = await ReceiptsDatabase().hasReceipt(url);
