@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:mercadinho/models/avatar_manager.dart';
+import 'package:mercadinho/components/avatar_preview.dart';
 
 class EditUserScreen extends StatefulWidget {
   const EditUserScreen({Key? key}) : super(key: key);
@@ -50,8 +51,23 @@ class _EditUserScreenState extends State<EditUserScreen> {
 
     if (image != null) {
       print('✅ Image selected: ${image.path}');
-      await _avatarManager.updateAvatar(File(image.path));
-      print('✅ Avatar update completed');
+      final selectedFile = File(image.path);
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (_) => AvatarPreview(
+                imageFile: selectedFile,
+                onSave: (croppedFile) async {
+                  await _avatarManager.updateAvatar(croppedFile);
+                  Navigator.pop(context, true);
+                },
+              ),
+        ),
+      );
+      if (result == true) {
+        print('✅ Avatar update completed via preview');
+      }
     } else {
       print('⚠️ No image selected');
     }
