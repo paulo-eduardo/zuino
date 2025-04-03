@@ -9,6 +9,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive/hive.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:mercadinho/screens/edit_user_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class StockScreen extends StatefulWidget {
   const StockScreen({super.key, required this.title});
@@ -78,20 +80,85 @@ class _StockScreenState extends State<StockScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    final screenTitle = user != null ? "Estoque de ${user.displayName}" : "Estoque";
+
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false, // Prevent back arrow from showing
+        toolbarHeight: 70, // Make AppBar taller
         title: Align(
           alignment: Alignment.centerLeft,
-          child: Text(widget.title), // Use dynamic title
+          child: Text(
+            screenTitle,
+            style: const TextStyle(fontSize: 20), // Slightly larger title
+          ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.account_circle),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-              );
+          Builder(
+            builder: (context) {
+              if (user != null) {
+                return PopupMenuButton<String>(
+                  icon: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.blue,
+                        width: 2,
+                      ),
+                    ),
+                    child: CircleAvatar(
+                      radius: 20,
+                      backgroundImage: AssetImage('assets/default_avatar.png'),
+                    ),
+                  ),
+                  offset: const Offset(0, 50),
+                  onSelected: (value) async {
+                    if (value == 'Editar') {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const EditUserScreen()),
+                      );
+                    } else if (value == 'Sair') {
+                      await FirebaseAuth.instance.signOut();
+                      Fluttertoast.showToast(
+                        msg: 'Você saiu com sucesso.',
+                        backgroundColor: Colors.green,
+                        textColor: Colors.white,
+                      );
+                      setState(() {});
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'Editar',
+                      child: Text('Editar'),
+                    ),
+                    const PopupMenuItem(
+                      value: 'Sair',
+                      child: Text('Sair'),
+                    ),
+                  ],
+                );
+              } else {
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const LoginScreen()),
+                    );
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 12),
+                    child: CircleAvatar(
+                      radius: 20,
+                      backgroundImage: AssetImage('assets/default_avatar.png'),
+                      backgroundColor: Colors.grey[700],
+                    ),
+                  ),
+                );
+              }
             },
           ),
         ],
