@@ -27,7 +27,11 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>This app requires access to the camera to read qr codes.</string>
+	<string>Precisamos de acesso à sua câmera para tirar uma foto para seu avatar ou para ler o código QR de seus recibos.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Precisamos de acesso à sua biblioteca de fotos para atualizar seu avatar.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Precisamos de permissão para salvar seu avatar na biblioteca de fotos.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
