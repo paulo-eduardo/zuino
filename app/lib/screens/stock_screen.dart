@@ -121,26 +121,51 @@ class _StockScreenState extends State<StockScreen> {
           FutureBuilder<List<Map<String, dynamic>>>(
             future: ProductsDatabase().getOutOfStockProducts(),
             builder: (context, snapshot) {
-              return IconButton(
-                icon: Badge(
-                  isLabelVisible: snapshot.hasData && snapshot.data!.isNotEmpty,
-                  label: snapshot.hasData && snapshot.data!.isNotEmpty 
-                      ? Text(snapshot.data!.length.toString())
-                      : null,
-                  child: const Icon(Icons.inventory_2_outlined),
-                ),
-                tooltip: 'Produtos em falta',
-                onPressed: () async {
-                  final result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const OutOfStockScreen(),
+              final outOfStockCount = snapshot.hasData ? snapshot.data!.length : 0;
+              
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.inventory_2_outlined),
+                    tooltip: 'Produtos em falta',
+                    onPressed: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const OutOfStockScreen(),
+                        ),
+                      );
+                      if (result == true) {
+                        _loadProducts();
+                      }
+                    },
+                  ),
+                  if (outOfStockCount > 0)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          '$outOfStockCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
                     ),
-                  );
-                  if (result == true) {
-                    _loadProducts();
-                  }
-                },
+                ],
               );
             },
           ),
