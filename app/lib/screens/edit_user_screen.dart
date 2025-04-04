@@ -113,9 +113,9 @@ class _EditUserScreenState extends State<EditUserScreen> {
         toastLength: Toast.LENGTH_LONG,
       );
       
-      // Navigate back to home screen
+      // Navigate back to home screen with result
       if (mounted) {
-        Navigator.of(context).pop();
+        Navigator.of(context).pop(true); // Return true to indicate successful update
       }
     } catch (e) {
       // Close loading dialog if open

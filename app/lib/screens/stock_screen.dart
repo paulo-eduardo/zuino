@@ -106,9 +106,10 @@ class _StockScreenState extends State<StockScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Get the latest user info to ensure we have the updated display name
     final user = FirebaseAuth.instance.currentUser;
     final screenTitle =
-        user != null ? "Estoque de ${user.displayName}" : "Estoque";
+        user != null ? "Estoque de ${user.displayName ?? 'Usuário'}" : "Estoque";
 
     return Scaffold(
       appBar: AppBar(
@@ -216,6 +217,8 @@ class _StockScreenState extends State<StockScreen> {
                       if (result == true) {
                         // Reload avatar when returning from edit screen
                         _avatarManager.loadAvatar();
+                        // Force UI refresh to update the header with new name
+                        setState(() {});
                       }
                     } else if (value == 'Sair') {
                       await _avatarManager.handleLogout();
