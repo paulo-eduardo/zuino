@@ -121,7 +121,10 @@ class _StockScreenState extends State<StockScreen> {
           FutureBuilder<List<Map<String, dynamic>>>(
             future: ProductsDatabase().getOutOfStockProducts(),
             builder: (context, snapshot) {
-              final outOfStockCount = snapshot.hasData ? snapshot.data!.length : 0;
+              // Handle loading, error, and success states
+              final outOfStockCount = snapshot.hasData && !snapshot.hasError 
+                  ? snapshot.data!.length 
+                  : 0;
               
               return Stack(
                 alignment: Alignment.center,

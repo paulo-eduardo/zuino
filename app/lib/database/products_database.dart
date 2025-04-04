@@ -54,11 +54,20 @@ class ProductsDatabase {
   
   Future<List<Map<String, dynamic>>> getOutOfStockProducts() async {
     final box = await Hive.openBox('products');
-    final products = box.values.toList().cast<Map<String, dynamic>>();
-    return products.where((product) {
+    final products = box.values.toList();
+    
+    List<Map<String, dynamic>> result = [];
+    for (var item in products) {
+      // Convert each item to Map<String, dynamic>
+      Map<String, dynamic> product = Map<String, dynamic>.from(item);
       final quantity = product['quantity'] as double;
       final used = (product['used'] ?? 0.0) as double;
-      return quantity <= used;
-    }).toList();
+      
+      if (quantity <= used) {
+        result.add(product);
+      }
+    }
+    
+    return result;
   }
 }

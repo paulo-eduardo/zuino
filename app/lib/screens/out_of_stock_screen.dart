@@ -23,12 +23,29 @@ class _OutOfStockScreenState extends State<OutOfStockScreen> {
       _isLoading = true;
     });
     
-    final products = await ProductsDatabase().getOutOfStockProducts();
-    
-    setState(() {
-      _outOfStockProducts = products;
-      _isLoading = false;
-    });
+    try {
+      final products = await ProductsDatabase().getOutOfStockProducts();
+      
+      setState(() {
+        _outOfStockProducts = products;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading out of stock products: $e');
+      setState(() {
+        _outOfStockProducts = [];
+        _isLoading = false;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao carregar produtos: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _removeProduct(String codigo) async {
