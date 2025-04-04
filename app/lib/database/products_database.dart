@@ -46,4 +46,19 @@ class ProductsDatabase {
       throw Exception('Product not found.');
     }
   }
+  
+  Future<void> removeProduct(String codigo) async {
+    final box = await Hive.openBox('products');
+    await box.delete(codigo);
+  }
+  
+  Future<List<Map<String, dynamic>>> getOutOfStockProducts() async {
+    final box = await Hive.openBox('products');
+    final products = box.values.toList().cast<Map<String, dynamic>>();
+    return products.where((product) {
+      final quantity = product['quantity'] as double;
+      final used = (product['used'] ?? 0.0) as double;
+      return quantity <= used;
+    }).toList();
+  }
 }

@@ -10,6 +10,7 @@ import 'package:hive/hive.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:mercadinho/screens/edit_user_screen.dart';
+import 'package:mercadinho/screens/out_of_stock_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:io';
 import 'package:mercadinho/models/avatar_manager.dart';
@@ -117,6 +118,32 @@ class _StockScreenState extends State<StockScreen> {
           ),
         ),
         actions: [
+          IconButton(
+            icon: Badge(
+              label: FutureBuilder<List<Map<String, dynamic>>>(
+                future: ProductsDatabase().getOutOfStockProducts(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                    return Text(snapshot.data!.length.toString());
+                  }
+                  return const Text('');
+                },
+              ),
+              child: const Icon(Icons.inventory_2_outlined),
+            ),
+            tooltip: 'Produtos em falta',
+            onPressed: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const OutOfStockScreen(),
+                ),
+              );
+              if (result == true) {
+                _loadProducts();
+              }
+            },
+          ),
           Builder(
             builder: (context) {
               if (user != null) {
