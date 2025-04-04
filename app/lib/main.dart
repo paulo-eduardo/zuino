@@ -7,6 +7,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart'; // Import dotenv
 import 'package:mercadinho/screens/stock_screen.dart'; // Ensure correct StockScreen import
 import 'package:mercadinho/models/app_user_info.dart'; // Update import
 
+// Global navigator key to access context from anywhere
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
@@ -29,6 +32,7 @@ class MyApp extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
     AppUserInfo.updateFromFirebaseUser(user); // Update global user info
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Flutter Demo',
       theme: ThemeData(
         brightness: Brightness.dark,

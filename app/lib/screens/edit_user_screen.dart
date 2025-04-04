@@ -25,8 +25,9 @@ class _EditUserScreenState extends State<EditUserScreen> {
     super.initState();
     if (_user != null) {
       _nameController.text = _user.displayName ?? '';
-      _avatarManager.loadAvatar();
       _avatarManager.addListener(_onAvatarChanged);
+      // Load avatar after the widget is fully built
+      Future.microtask(() => _avatarManager.loadAvatar());
     }
   }
 
@@ -48,7 +49,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
 
     if (image != null) {
       final selectedFile = File(image.path);
-      await Navigator.push(
+      final result = await Navigator.push(
         context,
         MaterialPageRoute(
           builder:
@@ -56,12 +57,17 @@ class _EditUserScreenState extends State<EditUserScreen> {
                 imageFile: selectedFile,
                 onSave: (croppedFile) async {
                   await _avatarManager.updateAvatar(croppedFile);
-                  Navigator.pop(context, true);
                 },
               ),
         ),
       );
+      
       if (!mounted) return;
+      
+      // Force refresh the avatar display
+      setState(() {
+        _avatarFile = _avatarManager.avatarFile;
+      });
     }
   }
 
@@ -152,13 +158,11 @@ class _EditUserScreenState extends State<EditUserScreen> {
                         ? const Center(
                             child: CircularProgressIndicator(),
                           )
-                        : _avatarFile != null
-                            ? Image.file(
-                                _avatarFile!,
+                        : _avatarManager.avatarImageBytes != null
+                            ? Image.memory(
+                                _avatarManager.avatarImageBytes!,
                                 fit: BoxFit.cover,
-                                key: ValueKey(
-                                  'avatar_${_avatarManager.timestamp}',
-                                ),
+                                key: ValueKey(_avatarManager.version),
                                 gaplessPlayback: false,
                               )
                             : Image.asset(

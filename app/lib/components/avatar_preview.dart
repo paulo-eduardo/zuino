@@ -7,7 +7,7 @@ import 'package:path_provider/path_provider.dart';
 
 class AvatarPreview extends StatefulWidget {
   final File imageFile;
-  final void Function(File croppedFile) onSave;
+  final Future<void> Function(File croppedFile) onSave;
 
   const AvatarPreview({Key? key, required this.imageFile, required this.onSave})
     : super(key: key);
@@ -23,6 +23,7 @@ class _AvatarPreviewState extends State<AvatarPreview> {
   Offset _initialFocalPoint = Offset.zero;
   Offset _initialOffset = Offset.zero;
   double _initialScale = 1.0;
+  bool _isSaving = false;
 
   final GlobalKey _boundaryKey = GlobalKey();
 
@@ -122,13 +123,22 @@ class _AvatarPreviewState extends State<AvatarPreview> {
               0,
               0.7,
             ), // adjust vertical alignment as needed
-            child: FloatingActionButton(
-              onPressed: () async {
-                File croppedFile = await _captureCroppedImage();
-                widget.onSave(croppedFile);
-              },
-              child: const Icon(Icons.save),
-            ),
+            child: _isSaving 
+              ? const CircularProgressIndicator()
+              : FloatingActionButton(
+                  onPressed: () async {
+                    setState(() {
+                      _isSaving = true;
+                    });
+                    File croppedFile = await _captureCroppedImage();
+                    await widget.onSave(croppedFile);
+                    // Close the preview screen after saving
+                    if (mounted) {
+                      Navigator.of(context).pop(true); // Return true to indicate success
+                    }
+                  },
+                  child: const Icon(Icons.save),
+                ),
           ),
         ],
       ),

@@ -45,8 +45,12 @@ class _StockScreenState extends State<StockScreen> {
 
   void _onAvatarChanged() {
     if (mounted) {
-      setState(() {
-        _avatarFile = _avatarManager.avatarFile;
+      // Use addPostFrameCallback to schedule setState after the current build is complete
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        setState(() {
+          // Force UI update by updating the avatar file reference
+          _avatarFile = _avatarManager.avatarFile;
+        });
       });
     }
   }
@@ -183,13 +187,20 @@ class _StockScreenState extends State<StockScreen> {
                       border: Border.all(color: Colors.blue, width: 2),
                     ),
                     child: CircleAvatar(
-                      key: ValueKey('avatar_${_avatarManager.timestamp}'),
+                      key: ValueKey('avatar_${_avatarManager.version}'),
                       radius: 20,
                       backgroundImage:
-                          _avatarFile != null
-                              ? FileImage(_avatarFile!, scale: 1.0)
+                          _avatarManager.avatarImageBytes != null
+                              ? MemoryImage(_avatarManager.avatarImageBytes!)
                               : const AssetImage('assets/default_avatar.png')
                                   as ImageProvider,
+                      onBackgroundImageError: (exception, stackTrace) {
+                        print('Error loading avatar image: $exception');
+                        // Force a rebuild with default avatar
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted) setState(() {});
+                        });
+                      },
                     ),
                   ),
                   offset: const Offset(0, 50),
@@ -207,7 +218,7 @@ class _StockScreenState extends State<StockScreen> {
                         _avatarManager.loadAvatar();
                       }
                     } else if (value == 'Sair') {
-                      await _avatarManager.clearAvatar();
+                      await _avatarManager.handleLogout();
                       await FirebaseAuth.instance.signOut();
                       Fluttertoast.showToast(
                         msg: 'Você saiu com sucesso.',
