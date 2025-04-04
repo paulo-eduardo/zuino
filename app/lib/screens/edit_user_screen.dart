@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:mercadinho/models/avatar_manager.dart';
 import 'package:mercadinho/components/avatar_preview.dart';
+import 'package:mercadinho/models/app_user_info.dart';
 
 class EditUserScreen extends StatefulWidget {
   const EditUserScreen({super.key});
@@ -76,19 +77,50 @@ class _EditUserScreenState extends State<EditUserScreen> {
     }
 
     try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        },
+      );
+
+      // Update Firebase Auth display name
       await _user?.updateDisplayName(newName);
       await _user?.reload();
-      setState(() {});
+      
+      // Update local cache
+      final updatedUser = FirebaseAuth.instance.currentUser;
+      AppUserInfo.updateFromFirebaseUser(updatedUser);
+      
+      // Close loading dialog
+      if (mounted) Navigator.of(context).pop();
+      
+      // Show success message
       Fluttertoast.showToast(
-        msg: 'Nome atualizado com sucesso.',
+        msg: 'Nome atualizado com sucesso!',
         backgroundColor: Colors.green,
         textColor: Colors.white,
+        toastLength: Toast.LENGTH_LONG,
       );
+      
+      // Navigate back to home screen
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
     } catch (e) {
+      // Close loading dialog if open
+      if (mounted) Navigator.of(context).pop();
+      
+      // Show error message
       Fluttertoast.showToast(
         msg: 'Erro ao atualizar o nome: $e',
         backgroundColor: Colors.red,
         textColor: Colors.white,
+        toastLength: Toast.LENGTH_LONG,
       );
     }
   }

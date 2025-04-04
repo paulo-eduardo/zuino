@@ -7,5 +7,17 @@ class AppUserInfo {
     uid = user?.uid;
     name = user?.displayName ?? "Usuário";
     email = user?.email;
+    
+    // Log update for debugging
+    print('AppUserInfo updated: uid=$uid, name=$name, email=$email');
+  }
+  
+  // Get current user info as a map
+  static Map<String, dynamic> toMap() {
+    return {
+      'uid': uid,
+      'name': name,
+      'email': email,
+    };
   }
 }
