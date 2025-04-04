@@ -148,20 +148,23 @@ class _EditUserScreenState extends State<EditUserScreen> {
                     ), // Thicker border
                   ),
                   child: ClipOval(
-                    child:
-                        _avatarFile != null
+                    child: _avatarManager.isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(),
+                          )
+                        : _avatarFile != null
                             ? Image.file(
-                              _avatarFile!,
-                              fit: BoxFit.cover,
-                              key: ValueKey(
-                                'avatar_${_avatarManager.timestamp}',
-                              ),
-                              gaplessPlayback: false,
-                            )
+                                _avatarFile!,
+                                fit: BoxFit.cover,
+                                key: ValueKey(
+                                  'avatar_${_avatarManager.timestamp}',
+                                ),
+                                gaplessPlayback: false,
+                              )
                             : Image.asset(
-                              'assets/default_avatar.png',
-                              fit: BoxFit.cover,
-                            ),
+                                'assets/default_avatar.png',
+                                fit: BoxFit.cover,
+                              ),
                   ),
                 ),
                 Positioned(
