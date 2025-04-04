@@ -118,30 +118,30 @@ class _StockScreenState extends State<StockScreen> {
           ),
         ),
         actions: [
-          IconButton(
-            icon: Badge(
-              label: FutureBuilder<List<Map<String, dynamic>>>(
-                future: ProductsDatabase().getOutOfStockProducts(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                    return Text(snapshot.data!.length.toString());
-                  }
-                  return const Text('');
-                },
-              ),
-              child: const Icon(Icons.inventory_2_outlined),
-            ),
-            tooltip: 'Produtos em falta',
-            onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const OutOfStockScreen(),
+          FutureBuilder<List<Map<String, dynamic>>>(
+            future: ProductsDatabase().getOutOfStockProducts(),
+            builder: (context, snapshot) {
+              return IconButton(
+                icon: Badge(
+                  isLabelVisible: snapshot.hasData && snapshot.data!.isNotEmpty,
+                  label: snapshot.hasData && snapshot.data!.isNotEmpty 
+                      ? Text(snapshot.data!.length.toString())
+                      : null,
+                  child: const Icon(Icons.inventory_2_outlined),
                 ),
+                tooltip: 'Produtos em falta',
+                onPressed: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const OutOfStockScreen(),
+                    ),
+                  );
+                  if (result == true) {
+                    _loadProducts();
+                  }
+                },
               );
-              if (result == true) {
-                _loadProducts();
-              }
             },
           ),
           Builder(

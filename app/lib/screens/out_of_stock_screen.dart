@@ -53,10 +53,21 @@ class _OutOfStockScreenState extends State<OutOfStockScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Produtos em Falta'),
-      ),
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pop(context, true); // Return true to refresh the stock screen
+        return false; // Prevent default back behavior
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Produtos em Falta'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              Navigator.pop(context, true); // Return true to refresh the stock screen
+            },
+          ),
+        ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _outOfStockProducts.isEmpty
@@ -193,6 +204,7 @@ class _OutOfStockScreenState extends State<OutOfStockScreen> {
                     );
                   },
                 ),
+      ),
     );
   }
 }
