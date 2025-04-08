@@ -70,4 +70,30 @@ class ProductsDatabase {
     
     return result;
   }
+
+  Future<List<Map<String, dynamic>>> getSortedProducts() async {
+    final box = await Hive.openBox('products');
+    final rawProducts = box.values.toList();
+    
+    // Properly convert each item to Map<String, dynamic>
+    final List<Map<String, dynamic>> productsList = rawProducts.map((item) {
+      return Map<String, dynamic>.from(item);
+    }).toList();
+    
+    // Sort products: first by stock availability, then by name
+    productsList.sort((a, b) {
+      // Calculate remaining stock for both products
+      final aStock = (a['quantity'] as double) - (a['used'] as double? ?? 0.0);
+      final bStock = (b['quantity'] as double) - (b['used'] as double? ?? 0.0);
+      
+      // If one has zero stock and the other doesn't, the one with stock comes first
+      if (aStock <= 0 && bStock > 0) return 1;
+      if (aStock > 0 && bStock <= 0) return -1;
+      
+      // If both have stock or both don't have stock, sort alphabetically by name
+      return (a['name'] as String).compareTo(b['name'] as String);
+    });
+    
+    return productsList;
+  }
 }

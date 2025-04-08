@@ -56,19 +56,43 @@ class _StockScreenState extends State<StockScreen> {
   }
 
   Future<void> _loadProducts() async {
-    final box = await Hive.openBox('products');
+    final sortedProducts = await ProductsDatabase().getSortedProducts();
     setState(() {
-      products = box.values.toList();
+      products = sortedProducts;
     });
   }
 
   Future<void> sendUrlToServer(String url) async {
     try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Processando recibo...'),
+              ],
+            ),
+          );
+        },
+      );
+
       final response = await http.post(
         Uri.parse('${dotenv.env['API_BASE_URL']}/receipt/scan'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'url': url}),
       );
+
+      // Close loading dialog - ensure we're popping the dialog, not the entire screen
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.of(context).pop();
+      }
+
       if (response.statusCode == 200) {
         final productList =
             (jsonDecode(response.body) as List).map((product) {
@@ -81,13 +105,26 @@ class _StockScreenState extends State<StockScreen> {
                 'used': 0.0,
               };
             }).toList();
+
+        // Save products to database
         await ProductsDatabase().saveProducts(productList);
-        _loadProducts();
-        _showToast('Recibo salvo com sucesso.', Colors.green);
+
+        // Create a visual refresh effect
+        if (mounted) {
+          // Immediately load products to prevent black screen
+          _loadProducts();
+
+          // Show success message
+          _showToast('Recibo salvo com sucesso.', Colors.green);
+        }
       } else {
         _showToast('Erro: Falha ao conectar ao servidor.', Colors.red);
       }
     } catch (e) {
+      // Close loading dialog if still showing
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.of(context).pop();
+      }
       _showToast('Erro: Falha ao conectar ao servidor.', Colors.red);
     }
   }
@@ -104,12 +141,57 @@ class _StockScreenState extends State<StockScreen> {
     );
   }
 
+  Future<void> _clearAllData() async {
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Limpar todos os dados'),
+            content: const Text(
+              'Isso irá remover todos os produtos e recibos. Esta ação não pode ser desfeita. Deseja continuar?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancelar'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Limpar'),
+              ),
+            ],
+          ),
+    );
+
+    if (confirmed == true) {
+      try {
+        // Clear products box
+        final productsBox = await Hive.openBox('products');
+        await productsBox.clear();
+
+        // Clear receipts box
+        final receiptsBox = await Hive.openBox('receipts');
+        await receiptsBox.clear();
+
+        // Reload products to update UI
+        await _loadProducts();
+
+        _showToast('Todos os dados foram limpos com sucesso.', Colors.green);
+      } catch (e) {
+        _showToast('Erro ao limpar dados: ${e.toString()}', Colors.red);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Get the latest user info to ensure we have the updated display name
     final user = FirebaseAuth.instance.currentUser;
     final screenTitle =
-        user != null ? "Estoque de ${user.displayName ?? 'Usuário'}" : "Estoque";
+        user != null
+            ? "Estoque de ${user.displayName ?? 'Usu&aacute;rio'}"
+            : "Estoque";
 
     return Scaffold(
       appBar: AppBar(
@@ -127,10 +209,11 @@ class _StockScreenState extends State<StockScreen> {
             future: ProductsDatabase().getOutOfStockProducts(),
             builder: (context, snapshot) {
               // Handle loading, error, and success states
-              final outOfStockCount = snapshot.hasData && !snapshot.hasError 
-                  ? snapshot.data!.length 
-                  : 0;
-              
+              final outOfStockCount =
+                  snapshot.hasData && !snapshot.hasError
+                      ? snapshot.data!.length
+                      : 0;
+
               return Stack(
                 alignment: Alignment.center,
                 children: [
@@ -196,8 +279,9 @@ class _StockScreenState extends State<StockScreen> {
                               : const AssetImage('assets/default_avatar.png')
                                   as ImageProvider,
                       onBackgroundImageError: (exception, stackTrace) {
-                        print('Error loading avatar image: $exception');
-                        // Force a rebuild with default avatar
+                        // Replace print with a comment or proper logging
+                        // Consider implementing a proper logging solution in the future
+                        // For now, we'll just force a rebuild with default avatar
                         WidgetsBinding.instance.addPostFrameCallback((_) {
                           if (mounted) setState(() {});
                         });
@@ -224,7 +308,7 @@ class _StockScreenState extends State<StockScreen> {
                       await _avatarManager.handleLogout();
                       await FirebaseAuth.instance.signOut();
                       Fluttertoast.showToast(
-                        msg: 'Você saiu com sucesso.',
+                        msg: 'Voc&ecirc; saiu com sucesso.',
                         backgroundColor: Colors.green,
                         textColor: Colors.white,
                       );
@@ -301,27 +385,48 @@ class _StockScreenState extends State<StockScreen> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => QRCodeReader()),
-          );
-          if (!mounted) return;
-          if (result != null) {
-            final url = result.toString();
-            final hasReceipt = await ReceiptsDatabase().hasReceipt(url);
-            if (hasReceipt) {
-              _showToast('Erro: Este recibo já foi lido.', Colors.red);
-            } else {
-              await sendUrlToServer(url);
-              if (await ReceiptsDatabase().hasReceipt(url)) {
-                await ReceiptsDatabase().insertReceipt(url);
-              }
-            }
-          }
-        },
-        child: const Icon(Icons.qr_code),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 16.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            FloatingActionButton(
+              heroTag: 'clearButton',
+              onPressed: _clearAllData,
+              backgroundColor: Colors.red,
+              tooltip: 'Limpar todos os dados',
+              child: const Icon(Icons.delete_forever),
+            ),
+            FloatingActionButton(
+              heroTag: 'scanButton',
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => QRCodeReader()),
+                );
+                if (!mounted) return;
+                if (result != null) {
+                  final url = result.toString();
+
+                  // Check if receipt already exists before sending to server
+                  final hasReceipt = await ReceiptsDatabase().hasReceipt(url);
+                  if (hasReceipt) {
+                    _showToast('Erro: Este recibo já foi lido.', Colors.red);
+                    return; // Exit early if receipt already exists
+                  }
+
+                  // If receipt doesn't exist, proceed with sending to server
+                  await sendUrlToServer(url);
+
+                  // After successful processing, save the receipt URL
+                  await ReceiptsDatabase().insertReceipt(url);
+                }
+              },
+              child: const Icon(Icons.qr_code),
+            ),
+          ],
+        ),
       ),
     );
   }
