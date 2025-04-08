@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mercadinho/services/firebase_storage_service.dart';
-import 'package:path/path.dart' as path;
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:mercadinho/utils/logger.dart';
 
 class AvatarManager extends ChangeNotifier {
   static final AvatarManager _instance = AvatarManager._internal();
   factory AvatarManager() => _instance;
+
+  final Logger _logger = Logger('AvatarManager');
 
   AvatarManager._internal();
 
@@ -68,7 +70,6 @@ class AvatarManager extends ChangeNotifier {
         try {
           // First check if avatar exists in Firebase Storage
           if (await _storageService.avatarExists()) {
-            print('Avatar exists in Firebase Storage, downloading...');
             _avatarFile = await _storageService.downloadAvatar(avatarPath);
             if (_avatarFile != null && await _avatarFile!.exists()) {
               _avatarImageBytes = await _avatarFile!.readAsBytes();
@@ -76,13 +77,13 @@ class AvatarManager extends ChangeNotifier {
               notifyListeners();
               return;
             } else {
-              print('Downloaded avatar file is null or does not exist');
+              _logger.debug('Downloaded avatar file is null or does not exist');
             }
           } else {
-            print('Avatar does not exist in Firebase Storage');
+            _logger.debug('Avatar does not exist in Firebase Storage');
           }
         } catch (e) {
-          print('Error downloading avatar from Firebase: $e');
+          _logger.error('Error downloading avatar from Firebase', e);
         }
       }
 
@@ -95,7 +96,7 @@ class AvatarManager extends ChangeNotifier {
         notifyListeners();
       });
     } catch (e) {
-      print('Error loading avatar: $e');
+      _logger.error('Error loading avatar', e);
       _isLoading = false;
       // Delay notification until after the current frame
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -146,7 +147,7 @@ class AvatarManager extends ChangeNotifier {
         _uploadAvatarInBackground(_avatarFile!);
       }
     } catch (e) {
-      print('Error updating avatar: $e');
+      _logger.error('Error updating avatar', e);
       _isLoading = false;
       notifyListeners();
     }
@@ -173,7 +174,7 @@ class AvatarManager extends ChangeNotifier {
         try {
           await avatarDir.delete(recursive: true);
         } catch (e) {
-          print('Error deleting local avatar directory: $e');
+          _logger.error('Error deleting local avatar directory', e);
         }
       }
 
@@ -181,7 +182,7 @@ class AvatarManager extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      print('Error clearing avatar: $e');
+      _logger.error('Error clearing avatar', e);
       _isLoading = false;
       notifyListeners();
     }
@@ -204,10 +205,10 @@ class AvatarManager extends ChangeNotifier {
   Future<void> _uploadAvatarInBackground(File file) async {
     try {
       await _storageService.uploadAvatar(file);
-      print('Avatar uploaded to Firebase Storage successfully');
+      _logger.info('Avatar uploaded to Firebase Storage successfully');
       _showToast('Avatar uploaded successfully', true);
     } catch (e) {
-      print('Error uploading avatar to Firebase Storage: $e');
+      _logger.error('Error uploading avatar to Firebase Storage', e);
       _showToast('Failed to upload avatar', false);
       // The avatar is already saved locally, so the user can still use it
     }
@@ -234,7 +235,7 @@ class AvatarManager extends ChangeNotifier {
         try {
           await avatarDir.delete(recursive: true);
         } catch (e) {
-          print('Error deleting local avatar directory: $e');
+          _logger.error('Error deleting local avatar directory', e);
         }
       }
 
@@ -242,7 +243,7 @@ class AvatarManager extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      print('Error handling logout: $e');
+      _logger.error('Error handling logout', e);
       _isLoading = false;
       notifyListeners();
     }
