@@ -12,7 +12,6 @@ import 'package:http/http.dart' as http;
 import 'package:mercadinho/screens/edit_user_screen.dart';
 import 'package:mercadinho/screens/out_of_stock_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'dart:io';
 import 'package:mercadinho/models/avatar_manager.dart';
 
 class StockScreen extends StatefulWidget {
@@ -26,7 +25,6 @@ class StockScreen extends StatefulWidget {
 
 class _StockScreenState extends State<StockScreen> {
   List<dynamic> products = [];
-  File? _avatarFile;
   final _avatarManager = AvatarManager();
 
   @override
@@ -49,7 +47,6 @@ class _StockScreenState extends State<StockScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         setState(() {
           // Force UI update by updating the avatar file reference
-          _avatarFile = _avatarManager.avatarFile;
         });
       });
     }

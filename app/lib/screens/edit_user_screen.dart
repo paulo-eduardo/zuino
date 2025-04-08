@@ -17,7 +17,6 @@ class EditUserScreen extends StatefulWidget {
 class _EditUserScreenState extends State<EditUserScreen> {
   final TextEditingController _nameController = TextEditingController();
   final User? _user = FirebaseAuth.instance.currentUser;
-  File? _avatarFile;
   final _avatarManager = AvatarManager();
 
   @override
@@ -38,9 +37,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
   }
 
   void _onAvatarChanged() {
-    setState(() {
-      _avatarFile = _avatarManager.avatarFile;
-    });
+    setState(() {});
   }
 
   Future<void> _updateAvatar() async {
@@ -49,7 +46,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
 
     if (image != null) {
       final selectedFile = File(image.path);
-      final result = await Navigator.push(
+      await Navigator.push(
         context,
         MaterialPageRoute(
           builder:
@@ -61,13 +58,11 @@ class _EditUserScreenState extends State<EditUserScreen> {
               ),
         ),
       );
-      
+
       if (!mounted) return;
-      
+
       // Force refresh the avatar display
-      setState(() {
-        _avatarFile = _avatarManager.avatarFile;
-      });
+      setState(() {});
     }
   }
 
@@ -88,23 +83,21 @@ class _EditUserScreenState extends State<EditUserScreen> {
         context: context,
         barrierDismissible: false,
         builder: (BuildContext context) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+          return const Center(child: CircularProgressIndicator());
         },
       );
 
       // Update Firebase Auth display name
       await _user?.updateDisplayName(newName);
       await _user?.reload();
-      
+
       // Update local cache
       final updatedUser = FirebaseAuth.instance.currentUser;
       AppUserInfo.updateFromFirebaseUser(updatedUser);
-      
+
       // Close loading dialog
       if (mounted) Navigator.of(context).pop();
-      
+
       // Show success message
       Fluttertoast.showToast(
         msg: 'Nome atualizado com sucesso!',
@@ -112,15 +105,17 @@ class _EditUserScreenState extends State<EditUserScreen> {
         textColor: Colors.white,
         toastLength: Toast.LENGTH_LONG,
       );
-      
+
       // Navigate back to home screen with result
       if (mounted) {
-        Navigator.of(context).pop(true); // Return true to indicate successful update
+        Navigator.of(
+          context,
+        ).pop(true); // Return true to indicate successful update
       }
     } catch (e) {
       // Close loading dialog if open
       if (mounted) Navigator.of(context).pop();
-      
+
       // Show error message
       Fluttertoast.showToast(
         msg: 'Erro ao atualizar o nome: $e',
@@ -154,21 +149,20 @@ class _EditUserScreenState extends State<EditUserScreen> {
                     ), // Thicker border
                   ),
                   child: ClipOval(
-                    child: _avatarManager.isLoading
-                        ? const Center(
-                            child: CircularProgressIndicator(),
-                          )
-                        : _avatarManager.avatarImageBytes != null
+                    child:
+                        _avatarManager.isLoading
+                            ? const Center(child: CircularProgressIndicator())
+                            : _avatarManager.avatarImageBytes != null
                             ? Image.memory(
-                                _avatarManager.avatarImageBytes!,
-                                fit: BoxFit.cover,
-                                key: ValueKey(_avatarManager.version),
-                                gaplessPlayback: false,
-                              )
+                              _avatarManager.avatarImageBytes!,
+                              fit: BoxFit.cover,
+                              key: ValueKey(_avatarManager.version),
+                              gaplessPlayback: false,
+                            )
                             : Image.asset(
-                                'assets/default_avatar.png',
-                                fit: BoxFit.cover,
-                              ),
+                              'assets/default_avatar.png',
+                              fit: BoxFit.cover,
+                            ),
                   ),
                 ),
                 Positioned(

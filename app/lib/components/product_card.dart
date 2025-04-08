@@ -10,7 +10,9 @@ class ProductCard extends StatelessWidget {
   final double quantity;
   final double total;
   final double used;
-  final VoidCallback onStockUpdated; // Add a callback for stock updates
+  final String? category;
+  final VoidCallback onStockUpdated;
+  final Widget? customFooter; // Add this parameter
 
   const ProductCard({
     super.key,
@@ -21,16 +23,18 @@ class ProductCard extends StatelessWidget {
     required this.quantity,
     required this.total,
     required this.used,
-    required this.onStockUpdated, // Add the callback to the constructor
+    this.category,
+    required this.onStockUpdated,
+    this.customFooter, // Add this parameter
   });
 
   @override
   Widget build(BuildContext context) {
+    final currentStock = quantity - used;
+    final isOutOfStock = currentStock <= 0;
+
     return Card(
-      color:
-          (quantity - used) <= 0
-              ? Colors.red[400] // Grayish red color for out-of-stock
-              : Colors.grey[800], // Default color
+      color: isOutOfStock ? Colors.red[400] : Colors.grey[800], // Default color
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(8.0), // Reduce padding
@@ -38,8 +42,8 @@ class ProductCard extends StatelessWidget {
           behavior:
               HitTestBehavior
                   .opaque, // Ensure taps are only detected on the card itself
-          onTap: () {
-            Navigator.push(
+          onTap: () async {
+            final result = await Navigator.push(
               context,
               MaterialPageRoute(
                 builder:
@@ -49,10 +53,16 @@ class ProductCard extends StatelessWidget {
                       unitValue: unitValue,
                       quantity: quantity,
                       total: total,
-                      used: used, // Pass the used parameter
+                      used: used,
+                      codigo: codigo,
+                      category: category,
                     ),
               ),
             );
+
+            if (result == true) {
+              onStockUpdated();
+            }
           },
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -76,7 +86,7 @@ class ProductCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Estoque: ${(quantity - used).toStringAsFixed(unit == 'kg' ? 3 : 0)} $unit', // Format stock to 3 decimal places
+                'Estoque: ${currentStock.toStringAsFixed(unit == 'kg' ? 3 : 0)} $unit', // Format stock to 3 decimal places
                 style: const TextStyle(
                   color: Colors.white70,
                   fontSize: 12,
@@ -94,164 +104,176 @@ class ProductCard extends StatelessWidget {
               ),
               const Spacer(),
               const SizedBox(height: 4), // Add extra spacing above the buttons
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (context) => ProductDetailScreen(
-                                name: name,
-                                unit: unit,
-                                unitValue: unitValue,
-                                quantity: quantity,
-                                total: total,
-                                used: used, // Pass the used parameter
-                              ),
+              customFooter ??
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) => ProductDetailScreen(
+                                    name: name,
+                                    unit: unit,
+                                    unitValue: unitValue,
+                                    quantity: quantity,
+                                    total: total,
+                                    used: used,
+                                    codigo: codigo,
+                                    category: category,
+                                  ),
+                            ),
+                          );
+
+                          if (result == true) {
+                            onStockUpdated();
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              Colors.blueGrey[600], // Opaque blue-grey color
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              16,
+                            ), // Rounded corners
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                            horizontal: 16,
+                          ), // Button padding
                         ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          Colors.blueGrey[600], // Opaque blue-grey color
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          16,
-                        ), // Rounded corners
+                        child: const Icon(
+                          Icons.edit,
+                          color: Colors.white,
+                          size: 24,
+                        ), // Centered edit icon
                       ),
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                        horizontal: 16,
-                      ), // Button padding
-                    ),
-                    child: const Icon(
-                      Icons.edit,
-                      color: Colors.white,
-                      size: 24,
-                    ), // Centered edit icon
-                  ),
-                  ElevatedButton(
-                    onPressed:
-                        (quantity - used) > 0
-                            ? () async {
-                              final productsDb = ProductsDatabase();
-                              final stockBefore = quantity - used;
+                      ElevatedButton(
+                        onPressed:
+                            isOutOfStock
+                                ? () {}
+                                : () async {
+                                  final productsDb = ProductsDatabase();
+                                  final stockBefore = currentStock;
 
-                              if (unit == 'kg') {
-                                // Show a modal for entering the amount in kg
-                                final amountToSpend = await showDialog<double>(
-                                  context: context,
-                                  builder: (context) {
-                                    final controller = TextEditingController(
-                                      text: stockBefore.toStringAsFixed(
-                                        3,
-                                      ), // Default value
-                                    );
-                                    return AlertDialog(
-                                      title: const Text('Gastar em KG'),
-                                      content: TextField(
-                                        controller: controller,
-                                        keyboardType:
-                                            const TextInputType.numberWithOptions(
-                                              decimal: true,
-                                            ),
-                                        decoration: const InputDecoration(
-                                          labelText: 'Quantidade em KG',
-                                          hintText: 'Ex: 1.234',
-                                        ),
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed:
-                                              () => Navigator.pop(
-                                                context,
-                                                null,
-                                              ), // Cancel
-                                          child: const Text('Cancelar'),
-                                        ),
-                                        TextButton(
-                                          onPressed: () {
-                                            final value = double.tryParse(
-                                              controller.text,
+                                  if (unit == 'kg') {
+                                    // Show a modal for entering the amount in kg
+                                    final amountToSpend = await showDialog<
+                                      double
+                                    >(
+                                      context: context,
+                                      builder: (context) {
+                                        final controller =
+                                            TextEditingController(
+                                              text: stockBefore.toStringAsFixed(
+                                                3,
+                                              ), // Default value
                                             );
-                                            if (value != null &&
-                                                value > 0 &&
-                                                value <= stockBefore) {
-                                              Navigator.pop(
-                                                context,
-                                                value,
-                                              ); // Confirm
-                                            } else {
-                                              ScaffoldMessenger.of(
-                                                context,
-                                              ).showSnackBar(
-                                                const SnackBar(
-                                                  content: Text(
-                                                    'Quantidade inválida',
-                                                  ),
+                                        return AlertDialog(
+                                          title: const Text('Gastar em KG'),
+                                          content: TextField(
+                                            controller: controller,
+                                            keyboardType:
+                                                const TextInputType.numberWithOptions(
+                                                  decimal: true,
                                                 ),
-                                              );
-                                            }
-                                          },
-                                          child: const Text('Confirmar'),
-                                        ),
-                                      ],
+                                            decoration: const InputDecoration(
+                                              labelText: 'Quantidade em KG',
+                                              hintText: 'Ex: 1.234',
+                                            ),
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed:
+                                                  () => Navigator.pop(
+                                                    context,
+                                                    null,
+                                                  ), // Cancel
+                                              child: const Text('Cancelar'),
+                                            ),
+                                            TextButton(
+                                              onPressed: () {
+                                                final value = double.tryParse(
+                                                  controller.text,
+                                                );
+                                                if (value != null &&
+                                                    value > 0 &&
+                                                    value <= stockBefore) {
+                                                  Navigator.pop(
+                                                    context,
+                                                    value,
+                                                  ); // Confirm
+                                                } else {
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
+                                                    const SnackBar(
+                                                      content: Text(
+                                                        'Quantidade inválida',
+                                                      ),
+                                                    ),
+                                                  );
+                                                }
+                                              },
+                                              child: const Text('Confirmar'),
+                                            ),
+                                          ],
+                                        );
+                                      },
                                     );
-                                  },
-                                );
 
-                                if (amountToSpend != null) {
-                                  await productsDb.useProduct(
-                                    codigo,
-                                    amountToSpend,
-                                  ); // Deduct the entered amount
-                                  onStockUpdated(); // Notify parent to refresh UI
-                                }
-                              } else {
-                                if (stockBefore >= 1) {
-                                  await productsDb.useProduct(
-                                    codigo,
-                                    1,
-                                  ); // Deduct 1 unit
-                                  onStockUpdated(); // Notify parent to refresh UI
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Estoque insuficiente para gastar 1 unidade',
-                                      ),
-                                    ),
-                                  );
-                                }
-                              }
-                            }
-                            : () {}, // Do nothing when stock is 0
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          (quantity - used) > 0
-                              ? Colors.red[400] // Opaque red color
-                              : Colors.grey, // Gray color for disabled button
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          16,
-                        ), // Rounded corners
+                                    if (amountToSpend != null) {
+                                      await productsDb.useProduct(
+                                        codigo,
+                                        amountToSpend,
+                                      ); // Deduct the entered amount
+                                      onStockUpdated(); // Notify parent to refresh UI
+                                    }
+                                  } else {
+                                    if (stockBefore >= 1) {
+                                      await productsDb.useProduct(
+                                        codigo,
+                                        1,
+                                      ); // Deduct 1 unit
+                                      onStockUpdated(); // Notify parent to refresh UI
+                                    } else {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Estoque insuficiente para gastar 1 unidade',
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  }
+                                },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              isOutOfStock
+                                  ? Colors.grey
+                                  : Colors.red[400], // Opaque red color
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              16,
+                            ), // Rounded corners
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                            horizontal: 16,
+                          ), // Button padding
+                        ),
+                        child: const Icon(
+                          Icons.remove_circle_outline,
+                          color: Colors.white,
+                          size: 24,
+                        ), // Updated icon
                       ),
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                        horizontal: 16,
-                      ), // Button padding
-                    ),
-                    child: const Icon(
-                      Icons.remove_circle_outline,
-                      color: Colors.white,
-                      size: 24,
-                    ), // Updated icon
+                    ],
                   ),
-                ],
-              ),
               const SizedBox(height: 8),
             ],
           ),
