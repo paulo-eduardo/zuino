@@ -1,0 +1,82 @@
+{
+  "DEFAULT_CATEGORY": "Outros",
+  "categories": [
+    {
+      "name": "Alimentos Básicos",
+      "keywords": [
+        "ARROZ",
+        "FEIJÃO",
+        "MACARRÃO",
+        "MAC ",
+        "LAMEN",
+        "MIOJO",
+        "FARINHA",
+        "AÇÚCAR",
+        "ACUCAR",
+        "SAL",
+        "ÓLEO",
+        "OLEO",
+        "AZEITE"
+      ]
+    },
+    {
+      "name": "Bebidas",
+      "keywords": [
+        "REFRIGERANTE",
+        "SUCO",
+        "ÁGUA",
+        "AGUA",
+        "LEITE",
+        "CERVEJA",
+        "VINHO",
+        "CACHAÇA",
+        "ENERGETICO",
+        "REFRESCO",
+        "GUARANA"
+      ]
+    },
+    {
+      "name": "Limpeza",
+      "keywords": [
+        "DETERGENTE",
+        "DETERG",
+        "SABÃO",
+        "SABAO",
+        "LIMPOL",
+        "DESINFETANTE",
+        "ÁGUA SANITÁRIA",
+        "AGUA SANITARIA",
+        "LIMPADOR",
+        "ESPONJA",
+        "LUSTRA",
+        "AMACIANTE",
+        "ALVEJANTE"
+      ]
+    },
+    {
+      "name": "Utilidades",
+      "keywords": [
+        "ISQUEIRO",
+        "FÓSFORO",
+        "FOSFORO",
+        "VELA",
+        "PILHA",
+        "BATERIA",
+        "LÂMPADA",
+        "LAMPADA",
+        "GUARDANAPO"
+      ]
+    },
+    {
+      "name": "Café e Chá",
+      "keywords": [
+        "CAFE",
+        "CAFÉ",
+        "CHÁ",
+        "CHA",
+        "CAPPUCCINO",
+        "FILTRO DE PAPEL"
+      ]
+    }
+  ]
+}
