@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mercadinho/database/products_database.dart';
-import 'package:mercadinho/database/categories_database.dart';
-import 'package:mercadinho/utils/logger.dart';
+import 'package:zuino/database/products_database.dart';
+import 'package:zuino/database/categories_database.dart';
+import 'package:zuino/utils/logger.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final String name;

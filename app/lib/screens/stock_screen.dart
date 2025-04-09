@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:mercadinho/components/product_card.dart';
-import 'package:mercadinho/database/products_database.dart';
-import 'package:mercadinho/database/receipts_database.dart';
-import 'package:mercadinho/screens/login_screen.dart';
-import 'package:mercadinho/components/qr_code_reader.dart';
+import 'package:zuino/components/product_card.dart';
+import 'package:zuino/database/products_database.dart';
+import 'package:zuino/database/receipts_database.dart';
+import 'package:zuino/screens/login_screen.dart';
+import 'package:zuino/components/qr_code_reader.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive/hive.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:mercadinho/screens/edit_user_screen.dart';
-import 'package:mercadinho/screens/out_of_stock_screen.dart';
+import 'package:zuino/screens/edit_user_screen.dart';
+import 'package:zuino/screens/out_of_stock_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:mercadinho/models/avatar_manager.dart';
+import 'package:zuino/models/avatar_manager.dart';
 
 class StockScreen extends StatefulWidget {
   const StockScreen({super.key, required this.title});

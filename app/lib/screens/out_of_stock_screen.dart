@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:mercadinho/database/products_database.dart';
-import 'package:mercadinho/utils/logger.dart';
-import 'package:mercadinho/components/product_card.dart';
-import 'package:mercadinho/screens/product_detail_screen.dart'; // Add this import
+import 'package:zuino/database/products_database.dart';
+import 'package:zuino/utils/logger.dart';
+import 'package:zuino/components/product_card.dart';
+import 'package:zuino/screens/product_detail_screen.dart'; // Add this import
 
 class OutOfStockScreen extends StatefulWidget {
   const OutOfStockScreen({Key? key}) : super(key: key);

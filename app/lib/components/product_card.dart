@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mercadinho/screens/product_detail_screen.dart';
-import 'package:mercadinho/database/products_database.dart';
+import 'package:zuino/screens/product_detail_screen.dart';
+import 'package:zuino/database/products_database.dart';
 
 class ProductCard extends StatelessWidget {
   final String codigo;

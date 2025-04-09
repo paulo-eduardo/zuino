@@ -4,8 +4,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Import FirebaseAuth
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // Import dotenv
-import 'package:mercadinho/screens/stock_screen.dart'; // Ensure correct StockScreen import
-import 'package:mercadinho/models/app_user_info.dart'; // Update import
+import 'package:zuino/screens/stock_screen.dart'; // Ensure correct StockScreen import
+import 'package:zuino/models/app_user_info.dart'; // Update import
 
 // Global navigator key to access context from anywhere
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();

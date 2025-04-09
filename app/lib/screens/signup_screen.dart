@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:mercadinho/models/app_user_info.dart'; // Update import
-import 'package:mercadinho/screens/stock_screen.dart'; // Import the correct StockScreen
+import 'package:zuino/models/app_user_info.dart'; // Update import
+import 'package:zuino/screens/stock_screen.dart'; // Import the correct StockScreen
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({Key? key}) : super(key: key);

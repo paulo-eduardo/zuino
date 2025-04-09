@@ -3,9 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'package:mercadinho/models/avatar_manager.dart';
-import 'package:mercadinho/components/avatar_preview.dart';
-import 'package:mercadinho/models/app_user_info.dart';
+import 'package:zuino/models/avatar_manager.dart';
+import 'package:zuino/components/avatar_preview.dart';
+import 'package:zuino/models/app_user_info.dart';
 
 class EditUserScreen extends StatefulWidget {
   const EditUserScreen({super.key});
