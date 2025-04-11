@@ -1,5 +1,4 @@
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import * as path from "path";
 
 import { LowSync } from "lowdb";
 import { JSONFileSync } from "lowdb/node";
@@ -92,9 +91,8 @@ const initialData: DbSchema = {
   ],
 };
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const file = join(__dirname, "../config", "categories_lowdb.json");
-
+const __dirname = process.cwd();
+const file = path.join(__dirname, "config/categories_lowdb.json");
 const adapter = new JSONFileSync<DbSchema>(file);
 
 // Use the DbSchema type for the LowSync instance

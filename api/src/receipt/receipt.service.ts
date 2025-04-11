@@ -1,6 +1,6 @@
 import axios from "axios";
 import * as cheerio from "cheerio";
-import { ReceiptItem, Receipt } from "./receipt.interfaces";
+import { ReceiptItem, Receipt, Store } from "./receipt.interfaces";
 import { getCategoryForProduct } from "../db/category.db";
 
 export async function getReceiptDetails(
@@ -9,15 +9,43 @@ export async function getReceiptDetails(
   const response = await axios.get(url);
   const $ = cheerio.load(response.data);
 
-  // Extract receipt details
+  // Extract store information
+  const store = extractStoreInfo($, $("#conteudo > .txtCenter"));
 
-  const $headerBlock = $("#conteudo > .txtCenter");
+  // Extract receipt metadata
+  const { date, number, series } = extractReceiptMetadata(
+    $("#infos > div[data-role='collapsible']").first().find("ul li").first(),
+  );
 
-  const storeName = $headerBlock.find("#u20").text().trim();
+  // Extract payment information
+  const { totalAmount, paymentMethod } = extractPaymentInfo($("#linhaTotal"));
+
+  const receipt: Receipt = {
+    id: url.split("chave=")[1],
+    store,
+    date: date,
+    number,
+    series,
+    totalAmount,
+    paymentMethod,
+    url,
+  };
+
+  // Extract receipt items
+  const items = extractReceiptItems($, $("#tabResult tr"));
+
+  return { receipt, items };
+}
+
+function extractStoreInfo(
+  $: cheerio.Root,
+  $headerBlock: cheerio.Cheerio,
+): Store {
+  const name = $headerBlock.find("#u20").text().trim();
   let cnpj = "";
   let address = "";
 
-  $headerBlock.find(".text").each((i, element) => {
+  $headerBlock.find(".text").each((_, element) => {
     const elementText = $(element).text();
 
     if (elementText.includes("CNPJ:")) {
@@ -27,18 +55,21 @@ export async function getReceiptDetails(
     }
   });
 
-  const $generalInfoLi = $("#infos > div[data-role='collapsible']")
-    .first()
-    .find("ul li")
-    .first();
+  return { name, cnpj, address };
+}
 
+function extractReceiptMetadata($generalInfoLi: cheerio.Cheerio): {
+  date: Date;
+  number: string;
+  series: string;
+} {
   const dateTimeStr =
     $generalInfoLi
       .text()
       .match(/Emissão:\s*(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}:\d{2})/)![1]
       .trim() || "";
 
-  const dateTime = dateTimeStr
+  const date = dateTimeStr
     ? new Date(dateTimeStr.replace(/(\d{2})\/(\d{2})\/(\d{4})/, "$3-$2-$1"))
     : new Date();
 
@@ -53,30 +84,29 @@ export async function getReceiptDetails(
       .match(/Série:\s*(\d+)/)![1]
       .trim() || "";
 
+  return { date, number, series };
+}
+
+function extractPaymentInfo($linhaTotal: cheerio.Cheerio): {
+  totalAmount: number;
+  paymentMethod: string;
+} {
   const totalAmount = parseFloat(
-    $("#linhaTotal .totalNumb.txtMax").text().trim().replace(",", "."),
+    $linhaTotal.find(".totalNumb.txtMax").text().trim().replace(",", "."),
   );
 
-  const paymentMethod = $("#linhaTotal .tx").text().trim();
+  const paymentMethod = $linhaTotal.find(".tx").text().trim();
 
-  const receipt: Receipt = {
-    id: url.split("chave=")[1],
-    store: {
-      name: storeName,
-      cnpj: cnpj,
-      address: address,
-    },
-    date: dateTime || new Date(),
-    number: number,
-    series: series,
-    totalAmount: totalAmount,
-    paymentMethod: paymentMethod,
-    url: url,
-  };
+  return { totalAmount, paymentMethod };
+}
 
+function extractReceiptItems(
+  $: cheerio.Root,
+  $tableResult: cheerio.Cheerio,
+): ReceiptItem[] {
   const receiptItemsMap: Record<string, ReceiptItem> = {};
 
-  $("#tabResult tr").each((i, element) => {
+  $tableResult.each((i, element) => {
     const row = $(element);
     const name = row.find(".txtTit2").text();
     const unit = row
@@ -124,7 +154,5 @@ export async function getReceiptDetails(
     }
   });
 
-  const items = Object.values(receiptItemsMap);
-
-  return { receipt, items };
+  return Object.values(receiptItemsMap);
 }

@@ -1,18 +1,15 @@
-// tsconfig.json
 {
   "compilerOptions": {
-    "module": "CommonJS", // <-- Change to CommonJS
-    "moduleResolution": "Node", // <-- Classic Node resolution works well with CJS
-    "outDir": "./dist", // Example output directory
-    "rootDir": "./src",
-    "target": "ES2020", // Or your preferred target
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "outDir": "./dist",
+    "rootDir": "./",
+    "target": "ES2020",
     "strict": true,
-    "esModuleInterop": true, // Important for smoother interop between CJS/ESM styles
+    "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
-    // remove "resolveJsonModule": true if you don't import json files directly
-    // remove "allowJs": true if you don't import js files directly
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "scripts/**/*"],
   "exclude": ["node_modules", "dist"]
 }
