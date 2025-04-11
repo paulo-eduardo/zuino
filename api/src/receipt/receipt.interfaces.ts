@@ -1,9 +1,26 @@
-export type ReceiptItem = {
+export interface Store {
+  name: string;
+  cnpj: string;
+  address: string;
+}
+
+export interface Receipt {
+  id: string;
+  store: Store;
+  date: Date;
+  number: string;
+  series: string;
+  totalAmount: number;
+  paymentMethod: string;
+  url: string;
+}
+
+export interface ReceiptItem {
   codigo: string;
   name: string;
-  store: string;
+  quantity: number;
   unit: string;
   unitValue: number;
-  quantity: number; // Changed to number for summing
-  total: number; // Changed to number for summing
-};
+  total: number;
+  category: string | undefined;
+}
