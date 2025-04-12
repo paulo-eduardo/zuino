@@ -108,31 +108,63 @@ function extractReceiptItems(
 
   $tableResult.each((i, element) => {
     const row = $(element);
-    const name = row.find(".txtTit2").text();
+
+    // More precise selection for product name
+    // Get only the text from the specific span with class txtTit or txtTit2
+    const name =
+      row.find("span.txtTit2").text() || row.find("span.txtTit").text();
+
+    if (!name) return; // Skip rows without a product name
+
     const unit = row
       .find(".RUN")
       .text()
-      .replace("UN:", "")
+      .replace(/UN:|\s+/g, " ")
       .trim()
       .toLowerCase();
+
     const unitValueText = row
       .find(".RvlUnit")
       .text()
-      .replace("Vl. Unit.:", "")
+      .replace(/Vl\.\s*Unit\.:|Â|¿/g, "")
       .trim();
-    const quantityText = row.find(".Rqtd").text().replace("Qtde.:", "").trim();
-    const totalText = row.find(".valor").text().trim();
 
-    const codigoMatch = row
-      .find(".RCod")
+    const quantityText = row
+      .find(".Rqtd")
       .text()
-      .match(/Código: (\d+)/);
-    const codigo = codigoMatch ? codigoMatch[1] : `unknown_${i}`;
+      .replace(/Qtde\.:|Â|¿/g, "")
+      .trim();
+
+    // Get the total value specifically from the span with class valor
+    const totalText = row.find("span.valor").text().replace(/Â|¿/g, "").trim();
+
+    // Handle different formats of code extraction
+    let codigo = `unknown_${i}`;
+    const codText = row.find(".RCod").text();
+
+    // Try different regex patterns to extract the code
+    const codigoMatch =
+      codText.match(/Código:\s*(\d+)/) ||
+      codText.match(/\(Código:\s*(\d+)/) ||
+      codText.match(/\(Cód\w*:\s*(\d+)/);
+
+    if (codigoMatch) {
+      codigo = codigoMatch[1];
+    }
 
     if (name) {
-      const unitValue = parseFloat(unitValueText.replace(",", "."));
-      const quantity = parseFloat(quantityText.replace(",", "."));
-      const total = parseFloat(totalText.replace(",", "."));
+      // Clean and parse numeric values
+      const cleanNumber = (text: string) =>
+        parseFloat(
+          text
+            .replace(/\./g, "")
+            .replace(/,/g, ".")
+            .replace(/[^\d.-]/g, ""),
+        );
+
+      const unitValue = cleanNumber(unitValueText);
+      const quantity = cleanNumber(quantityText);
+      const total = cleanNumber(totalText);
       const category = getCategoryForProduct(name);
 
       if (receiptItemsMap[codigo]) {
