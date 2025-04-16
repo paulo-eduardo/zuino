@@ -201,6 +201,19 @@ class _ProductListSectionState extends State<ProductListSection> {
     );
   }
 
+  void _addToShoppingList(Product product) {
+    // Your existing code to add the product to shopping list
+  }
+
+  void _handleProductTap(Product product) {
+    if (_isEditMode) {
+      _navigateToEditScreen(product);
+    } else {
+      // Your existing code to add the product to shopping list
+      _addToShoppingList(product);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_errorMessage != null) {
@@ -291,7 +304,7 @@ class _ProductListSectionState extends State<ProductListSection> {
                 code: product.code,
                 name: product.name,
                 category: product.category,
-                onProductAdded: () {},
+                onProductAdded: () => _handleProductTap(product),
                 isEditMode: _isEditMode,
                 onEditPressed: () => _navigateToEditScreen(product),
                 roundTopLeft: roundTopLeft,
