@@ -5,14 +5,13 @@ import 'package:zuino/components/base_item_card.dart';
 import 'package:zuino/database/shopping_list_database.dart';
 import 'package:zuino/models/shopping_item.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:zuino/screens/edit_product_screen.dart';
 
 class ProductCard extends StatelessWidget {
   final String code;
   final String name;
   final String? category;
-  final Function? onProductAdded;
   final bool isEditMode;
-  final Function? onEditPressed;
   final bool roundTopLeft;
   final bool roundTopRight;
   final bool roundBottomLeft;
@@ -25,9 +24,7 @@ class ProductCard extends StatelessWidget {
     required this.code,
     required this.name,
     this.category,
-    this.onProductAdded,
     this.isEditMode = false,
-    this.onEditPressed,
     this.roundTopLeft = true,
     this.roundTopRight = true,
     this.roundBottomLeft = true,
@@ -51,18 +48,6 @@ class ProductCard extends StatelessWidget {
         await _shoppingListDb.addOrUpdateItem(item);
         _logger.info('Added new item to shopping list: $code');
       }
-
-      // Call the callback if provided
-      if (onProductAdded != null) {
-        onProductAdded!();
-      }
-
-      // Show a toast message
-      Fluttertoast.showToast(
-        msg: "Added to shopping list",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-      );
     } catch (e) {
       _logger.error('Error adding product to shopping list: $e');
 
@@ -74,6 +59,24 @@ class ProductCard extends StatelessWidget {
         backgroundColor: Colors.red,
       );
     }
+  }
+
+  Future<void> _navigateToEditScreen(BuildContext context) async {
+    _logger.info('Navigating to edit screen for product: $name ($code)');
+
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => EditProductScreen(
+              codigo: code,
+              onProductUpdated: () {
+                _logger.info('Product updated callback received');
+              },
+            ),
+      ),
+    );
+    _logger.info('Returned from edit screen with result: $result');
   }
 
   @override
@@ -92,11 +95,7 @@ class ProductCard extends StatelessWidget {
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: () {
-                if (onEditPressed != null) {
-                  onEditPressed!();
-                }
-              },
+              onTap: () => _navigateToEditScreen(context),
               child: Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
@@ -114,7 +113,10 @@ class ProductCard extends StatelessWidget {
     }
 
     return GestureDetector(
-      onTap: _addToShoppingList,
+      onTap:
+          isEditMode
+              ? () => _navigateToEditScreen(context)
+              : _addToShoppingList,
       child: BaseItemCard(
         name: name,
         category: category,

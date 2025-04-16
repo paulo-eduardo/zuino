@@ -5,87 +5,6 @@ import 'package:zuino/models/product.dart';
 import 'package:zuino/screens/edit_product_screen.dart';
 import 'package:zuino/utils/logger.dart';
 
-// ShakeWidget implementation
-class ShakeWidget extends StatefulWidget {
-  final Widget child;
-  final bool isShaking;
-  final double shakeOffset;
-  final Duration duration;
-
-  const ShakeWidget({
-    Key? key,
-    required this.child,
-    this.isShaking = false,
-    this.shakeOffset = 2.0,
-    this.duration = const Duration(milliseconds: 500),
-  }) : super(key: key);
-
-  @override
-  State<ShakeWidget> createState() => _ShakeWidgetState();
-}
-
-class _ShakeWidgetState extends State<ShakeWidget>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _offsetAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this, duration: widget.duration);
-    _setupAnimation();
-
-    if (widget.isShaking) {
-      _controller.repeat(reverse: true);
-    }
-  }
-
-  @override
-  void didUpdateWidget(ShakeWidget oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    if (widget.isShaking != oldWidget.isShaking) {
-      if (widget.isShaking) {
-        _controller.repeat(reverse: true);
-      } else {
-        _controller.stop();
-        _controller.reset();
-      }
-    }
-
-    if (widget.shakeOffset != oldWidget.shakeOffset) {
-      _setupAnimation();
-    }
-  }
-
-  void _setupAnimation() {
-    _offsetAnimation = Tween<double>(
-      begin: -widget.shakeOffset,
-      end: widget.shakeOffset,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(widget.isShaking ? _offsetAnimation.value : 0, 0),
-          child: child,
-        );
-      },
-      child: widget.child,
-    );
-  }
-}
-
 class ProductListSection extends StatefulWidget {
   const ProductListSection({super.key});
 
@@ -174,46 +93,6 @@ class _ProductListSectionState extends State<ProductListSection> {
     });
   }
 
-  void _navigateToEditScreen(Product product) {
-    _logger.info(
-      'Navigating to edit screen for product: ${product.name} (${product.code})',
-    );
-
-    // Exit edit mode
-    setState(() {
-      _isEditMode = false;
-    });
-
-    // Navigate to edit screen
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder:
-            (context) => EditProductScreen(
-              codigo: product.code,
-              onProductUpdated: () {
-                _logger.info('Product updated callback received');
-                // Reload products when returning from edit screen
-                _loadProducts();
-              },
-            ),
-      ),
-    );
-  }
-
-  void _addToShoppingList(Product product) {
-    // Your existing code to add the product to shopping list
-  }
-
-  void _handleProductTap(Product product) {
-    if (_isEditMode) {
-      _navigateToEditScreen(product);
-    } else {
-      // Your existing code to add the product to shopping list
-      _addToShoppingList(product);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     if (_errorMessage != null) {
@@ -281,10 +160,6 @@ class _ProductListSectionState extends State<ProductListSection> {
               // Determine which corners should be rounded
               final bool roundTopLeft = row == 0 && col == 0;
               final bool roundTopRight = row == 0 && col == 2;
-              final bool roundBottomLeft =
-                  (row == (_products.length - 1) ~/ 3) && col == 0;
-              final bool roundBottomRight =
-                  (row == (_products.length - 1) ~/ 3) && col == 2;
 
               // Check if this is the last row
               final bool isLastRow = row == (_products.length - 1) ~/ 3;
@@ -304,9 +179,7 @@ class _ProductListSectionState extends State<ProductListSection> {
                 code: product.code,
                 name: product.name,
                 category: product.category,
-                onProductAdded: () => _handleProductTap(product),
                 isEditMode: _isEditMode,
-                onEditPressed: () => _navigateToEditScreen(product),
                 roundTopLeft: roundTopLeft,
                 roundTopRight: roundTopRight,
                 roundBottomLeft: adjustedRoundBottomLeft,

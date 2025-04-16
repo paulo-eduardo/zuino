@@ -57,35 +57,65 @@ class BaseItemCard extends StatelessWidget {
             // Card content
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Icon or custom icon
-                  if (customIcon != null)
-                    customIcon!
-                  else
-                    Icon(
-                      _getCategoryIcon(category),
-                      size: 48,
-                      color: Colors.blue,
-                    ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  // Calculate responsive spacing based on available height
+                  final availableHeight = constraints.maxHeight;
+                  final iconSize =
+                      availableHeight * 0.6; // 45% of available height
+                  final spacingSize =
+                      availableHeight * 0.08; // 8% of available height
+                  final textSize =
+                      availableHeight * 0.2; // 20% of available height
 
-                  const SizedBox(height: 8),
-
-                  // Name
-                  if (name != null)
-                    Text(
-                      name!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Icon or custom icon
+                      SizedBox(
+                        height: iconSize,
+                        child: Center(
+                          child:
+                              customIcon ??
+                              Icon(
+                                _getCategoryIcon(category),
+                                size: iconSize,
+                                color: Colors.blue,
+                              ),
+                        ),
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                ],
+
+                      // Responsive spacing
+                      SizedBox(height: spacingSize),
+
+                      // Name
+                      SizedBox(
+                        height: textSize,
+                        child: Center(
+                          child:
+                              name != null
+                                  ? Container(
+                                    constraints: BoxConstraints(
+                                      maxWidth: constraints.maxWidth * 0.9,
+                                    ),
+                                    child: Text(
+                                      name!,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  )
+                                  : const SizedBox.shrink(),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
 
@@ -105,7 +135,9 @@ class BaseItemCard extends StatelessWidget {
               _buildShimmerEffect(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.3),
+                    color: Colors.white.withAlpha(
+                      77,
+                    ), // 0.3 opacity is roughly 77 in alpha
                     borderRadius: borderRadius,
                   ),
                 ),
@@ -127,7 +159,22 @@ class BaseItemCard extends StatelessWidget {
   }
 
   Widget _buildShimmerEffect({required Widget child}) {
-    // Your existing shimmer effect
-    return child;
+    return ShaderMask(
+      blendMode: BlendMode.srcATop,
+      shaderCallback: (bounds) {
+        return LinearGradient(
+          colors: [
+            Colors.grey.shade300,
+            Colors.grey.shade100,
+            Colors.grey.shade300,
+          ],
+          stops: const [0.1, 0.5, 0.9],
+          begin: const Alignment(-1.0, -0.5),
+          end: const Alignment(1.0, 0.5),
+          tileMode: TileMode.clamp,
+        ).createShader(bounds);
+      },
+      child: child,
+    );
   }
 }
