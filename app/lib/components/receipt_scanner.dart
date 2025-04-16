@@ -174,6 +174,7 @@ class ReceiptScanner {
             'code': item['codigo'],
             'name': item['name'],
             'category': item['category'] ?? 'Outros',
+            'unitValue': item['unitValue'] ?? 0.0,
           });
 
           // Format for receipt database
@@ -239,6 +240,7 @@ class ReceiptScanner {
           code: productItem['code'],
           name: productItem['name'],
           category: productItem['category'],
+          lastUnitPrice: productItem['unitValue'],
         );
 
         await _productDb.insertOrUpdate(product);

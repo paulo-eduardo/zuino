@@ -99,18 +99,43 @@ class ProductDatabase {
     double total = 0.0;
 
     try {
+      _logger.info('Calculating total price for ${items.length} items');
+
       for (final item in items) {
+        _logger.info(
+          'Processing item: ${item.productCode}, quantity: ${item.quantity}',
+        );
+
         final product = await getProduct(item.productCode);
+
         if (product != null) {
+          _logger.info(
+            'Found product: ${product.name}, price: ${product.lastUnitPrice}',
+          );
           total += product.lastUnitPrice * item.quantity;
+          _logger.info('Running total: $total');
+        } else {
+          _logger.warning('Product not found for code: ${item.productCode}');
         }
       }
 
-      _logger.info('Calculated total price: $total');
+      _logger.info('Final calculated total price: $total');
       return total;
     } catch (e) {
       _logger.error('Error calculating total price', e);
       return 0.0;
+    }
+  }
+
+  /// Clears all products from the database
+  Future<void> clearAll() async {
+    try {
+      final box = await Hive.openBox(_boxName);
+      await box.clear();
+      _logger.info('Cleared all products from database');
+    } catch (e, stackTrace) {
+      _logger.error('Error clearing products database', e, stackTrace);
+      rethrow;
     }
   }
 }

@@ -203,123 +203,105 @@ class _ProductListSectionState extends State<ProductListSection> {
 
   @override
   Widget build(BuildContext context) {
-    _logger.info(
-      'Building ProductListSection. Loading: $_isLoading, Products count: ${_products.length}, Error: ${_errorMessage != null}',
-    );
+    if (_errorMessage != null) {
+      return Center(
+        child: Text(
+          'Error: $_errorMessage',
+          style: const TextStyle(color: Colors.red),
+        ),
+      );
+    }
+
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section title with edit button
+        // Section header with edit toggle
         Padding(
-          padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Produtos',
-                style: TextStyle(
-                  fontSize: 20.0,
+                style: const TextStyle(
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
                 ),
               ),
-              // Edit/Cancel button
-              IconButton(
-                icon: Icon(
-                  _isEditMode ? Icons.close : Icons.edit,
-                  color: Colors.white,
+              if (true)
+                IconButton(
+                  icon: Icon(
+                    _isEditMode ? Icons.check : Icons.edit,
+                    color: Colors.blue,
+                  ),
+                  onPressed: _toggleEditMode,
                 ),
-                onPressed: _toggleEditMode,
-              ),
             ],
           ),
         ),
 
-        // Loading indicator, error message, empty state, or product grid
-        if (_isLoading)
-          const Center(
-            child: Padding(
-              padding: EdgeInsets.all(24.0),
-              child: CircularProgressIndicator(),
+        // Product grid
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              childAspectRatio: 1.0,
+              crossAxisSpacing: 0,
+              mainAxisSpacing: 0,
             ),
-          )
-        else if (_errorMessage != null)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  Text(
-                    _errorMessage!,
-                    style: const TextStyle(color: Colors.red),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _loadProducts,
-                    child: const Text('Tentar novamente'),
-                  ),
-                ],
-              ),
-            ),
-          )
-        else if (_products.isEmpty)
-          const Center(
-            child: Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Text(
-                'Nenhum produto cadastrado',
-                style: TextStyle(color: Colors.white70),
-              ),
-            ),
-          )
-        else
-          LayoutBuilder(
-            builder: (context, constraints) {
-              _logger.info(
-                'Building grid with constraints: ${constraints.maxWidth}x${constraints.maxHeight}',
-              );
+            itemCount: _products.length,
+            itemBuilder: (context, index) {
+              final product = _products[index];
 
-              // Use a container with a fixed height
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    childAspectRatio: 1.0, // Perfect square
-                    crossAxisSpacing: 0,
-                    mainAxisSpacing: 0,
-                  ),
-                  itemCount: _products.length,
-                  itemBuilder: (context, index) {
-                    final product = _products[index];
-                    _logger.info(
-                      'Building product card for ${product.name} at index $index',
-                    );
+              // Calculate position in grid
+              final int row =
+                  index ~/ 3; // Integer division by 3 (crossAxisCount)
+              final int col = index % 3; // Remainder when divided by 3
 
-                    return ShakeWidget(
-                      isShaking: _isEditMode,
-                      shakeOffset: 1.5, // Subtle shake
-                      duration: const Duration(milliseconds: 700),
-                      child: ProductCard(
-                        name: product.name,
-                        code: product.code,
-                        category: product.category,
-                        isEditMode: _isEditMode,
-                        onEditPressed:
-                            _isEditMode
-                                ? () => _navigateToEditScreen(product)
-                                : null,
-                      ),
-                    );
-                  },
-                ),
+              // Determine which corners should be rounded
+              final bool roundTopLeft = row == 0 && col == 0;
+              final bool roundTopRight = row == 0 && col == 2;
+              final bool roundBottomLeft =
+                  (row == (_products.length - 1) ~/ 3) && col == 0;
+              final bool roundBottomRight =
+                  (row == (_products.length - 1) ~/ 3) && col == 2;
+
+              // Check if this is the last row
+              final bool isLastRow = row == (_products.length - 1) ~/ 3;
+
+              // For the last row, we need to check if it's a full row
+              final bool isFullLastRow = _products.length % 3 == 0;
+
+              // Adjust bottom corners for partial last rows
+              final bool adjustedRoundBottomLeft = isLastRow && col == 0;
+              final bool adjustedRoundBottomRight =
+                  isLastRow &&
+                  (isFullLastRow
+                      ? col == 2
+                      : col == (_products.length % 3) - 1);
+
+              return ProductCard(
+                code: product.code,
+                name: product.name,
+                category: product.category,
+                onProductAdded: () {},
+                isEditMode: _isEditMode,
+                onEditPressed: () => _navigateToEditScreen(product),
+                roundTopLeft: roundTopLeft,
+                roundTopRight: roundTopRight,
+                roundBottomLeft: adjustedRoundBottomLeft,
+                roundBottomRight: adjustedRoundBottomRight,
               );
             },
           ),
+        ),
       ],
     );
   }

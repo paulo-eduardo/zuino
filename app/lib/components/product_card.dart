@@ -4,6 +4,7 @@ import 'package:zuino/utils/logger.dart';
 import 'package:zuino/components/base_item_card.dart';
 import 'package:zuino/database/shopping_list_database.dart';
 import 'package:zuino/models/shopping_item.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class ProductCard extends StatelessWidget {
   final String code;
@@ -12,6 +13,10 @@ class ProductCard extends StatelessWidget {
   final Function? onProductAdded;
   final bool isEditMode;
   final Function? onEditPressed;
+  final bool roundTopLeft;
+  final bool roundTopRight;
+  final bool roundBottomLeft;
+  final bool roundBottomRight;
   final _logger = Logger('ProductCard');
   final _shoppingListDb = ShoppingListDatabase();
 
@@ -23,68 +28,104 @@ class ProductCard extends StatelessWidget {
     this.onProductAdded,
     this.isEditMode = false,
     this.onEditPressed,
+    this.roundTopLeft = true,
+    this.roundTopRight = true,
+    this.roundBottomLeft = true,
+    this.roundBottomRight = true,
   });
 
   Future<void> _addToShoppingList() async {
     try {
-      _logger.info('Attempting to add product to shopping list: $code');
+      _logger.info('Adding product to shopping list: $code');
 
-      // Check if item already exists in shopping list
-      final existingItem = await _shoppingListDb.getItem(code);
+      // Check if the item already exists in the shopping list
+      final exists = await _shoppingListDb.itemExists(code);
 
-      if (existingItem != null) {
-        // If item exists, increment quantity
-        _logger.info(
-          'Product already in shopping list, increasing quantity: $code',
-        );
-        await _shoppingListDb.updateQuantity(code, existingItem.quantity + 1);
-        _logger.info('Increased quantity for item: $code');
+      if (exists) {
+        // If it exists, increment the quantity
+        await _shoppingListDb.incrementQuantity(code, 1.0);
+        _logger.info('Incremented quantity for existing item: $code');
       } else {
-        // If item doesn't exist, add it with quantity 1
-        _logger.info('Adding new product to shopping list: $code');
-        final newItem = ShoppingItem(productCode: code);
-        await _shoppingListDb.addOrUpdateItem(newItem);
+        // If it doesn't exist, add it with quantity 1
+        final item = ShoppingItem(productCode: code, quantity: 1.0);
+        await _shoppingListDb.addOrUpdateItem(item);
         _logger.info('Added new item to shopping list: $code');
       }
 
-      // Call the callback to notify parent components
+      // Call the callback if provided
       if (onProductAdded != null) {
         onProductAdded!();
       }
+
+      // Show a toast message
+      Fluttertoast.showToast(
+        msg: "Added to shopping list",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+      );
     } catch (e) {
-      _logger.error('Error adding product to shopping list', e);
+      _logger.error('Error adding product to shopping list: $e');
+
+      // Show an error toast
+      Fluttertoast.showToast(
+        msg: "Error adding to shopping list",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return BaseItemCard(
-      name: name,
-      category: category,
-      isEditMode: isEditMode,
-      onTap: () {
-        if (isEditMode && onEditPressed != null) {
-          onEditPressed!();
-        } else if (!isEditMode) {
-          _addToShoppingList();
-
-          // Show a snackbar to confirm the item was added
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('$name adicionado à lista de compras'),
-              duration: const Duration(seconds: 1),
-              behavior: SnackBarBehavior.floating,
-              action: SnackBarAction(
-                label: 'Ver Lista',
-                onPressed: () {
-                  // Navigate to shopping list screen
-                  Navigator.pushNamed(context, '/shopping_list');
-                },
+    // Edit button overlay for edit mode
+    Widget? overlay;
+    if (isEditMode) {
+      overlay = Positioned(
+        right: 0,
+        top: 0,
+        child: ClipRRect(
+          // Only round the top-right corner if the card has a rounded top-right corner
+          borderRadius: BorderRadius.only(
+            topRight: roundTopRight ? const Radius.circular(8) : Radius.zero,
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                if (onEditPressed != null) {
+                  onEditPressed!();
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withAlpha(204),
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(10),
+                  ),
+                ),
+                child: const Icon(Icons.edit, color: Colors.white, size: 16),
               ),
             ),
-          );
-        }
-      },
+          ),
+        ),
+      );
+    }
+
+    return GestureDetector(
+      onTap: _addToShoppingList,
+      child: BaseItemCard(
+        name: name,
+        category: category,
+        isEditMode: false, // We're handling our own edit overlay
+        overlay: overlay,
+        fixedSize: true,
+        roundTopLeft: roundTopLeft,
+        roundTopRight: roundTopRight,
+        roundBottomLeft: roundBottomLeft,
+        roundBottomRight: roundBottomRight,
+      ),
     );
   }
 }

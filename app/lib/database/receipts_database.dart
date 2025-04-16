@@ -179,4 +179,17 @@ class ReceiptsDatabase {
       rethrow;
     }
   }
+
+  // Add this method to the ReceiptDatabase class
+
+  Future<void> clearAll() async {
+    try {
+      final box = await _openBox();
+      await box.clear();
+      _logger.info('Cleared all receipts from database');
+    } catch (e, stackTrace) {
+      _logger.error('Error clearing receipts database', e, stackTrace);
+      rethrow;
+    }
+  }
 }

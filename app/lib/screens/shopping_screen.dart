@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:zuino/components/page_header.dart';
 import 'package:zuino/components/product_list_section.dart';
+import 'package:zuino/components/receipt_scanner.dart';
 import 'package:zuino/components/shopping_list_section.dart';
 import 'package:zuino/components/speed_dial_fab.dart';
-import 'package:zuino/components/receipt_scanner.dart';
+import 'package:zuino/database/database_cleaner.dart';
+import 'package:zuino/database/product_database.dart';
+import 'package:zuino/database/receipts_database.dart';
+import 'package:zuino/database/shopping_list_database.dart';
 import 'package:zuino/screens/analytics_screen.dart';
 import 'package:zuino/utils/logger.dart';
-import 'package:zuino/database/shopping_list_database.dart';
 
 class ShoppingScreen extends StatefulWidget {
   final bool showHeader;
@@ -18,6 +21,8 @@ class ShoppingScreen extends StatefulWidget {
 }
 
 class _ShoppingScreenState extends State<ShoppingScreen> {
+  final ProductDatabase _productDb = ProductDatabase();
+  final ReceiptsDatabase _receiptDb = ReceiptsDatabase();
   final _logger = Logger('ShoppingScreen');
   final _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
   final _shoppingListKey = GlobalKey<State<ShoppingListSection>>();
@@ -139,10 +144,15 @@ class _ShoppingScreenState extends State<ShoppingScreen> {
             backgroundColor: Colors.green,
           ),
           SpeedDialItem(
-            icon: Icons.add_shopping_cart,
-            label: 'Adicionar Item',
-            onTap: _addNewItem,
-            backgroundColor: Colors.blue,
+            icon: Icons.delete_sweep,
+            label: 'Limpar Produtos',
+            backgroundColor: Colors.red,
+            onTap: () {
+              DatabaseCleaner(
+                productDb: _productDb,
+                receiptDb: _receiptDb,
+              ).clearAllData(context);
+            },
           ),
           SpeedDialItem(
             icon: Icons.delete_sweep,
