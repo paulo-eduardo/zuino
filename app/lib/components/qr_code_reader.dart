@@ -37,17 +37,25 @@ class _QRCodeReaderState extends State<QRCodeReader> {
               borderLength: 30,
               borderWidth: 10,
               cutOutSize: 300,
-              overlayColor: Colors.black.withOpacity(0.8), // Semi-transparent overlay
+              overlayColor: Colors.black.withOpacity(
+                0.8,
+              ), // Semi-transparent overlay
             ),
           ),
           Positioned(
-            bottom: MediaQuery.of(context).size.height * 0.1, // Adjust the bottom position dynamically
-            left: MediaQuery.of(context).size.width / 2 - 28, // Adjust the left position dynamically
+            bottom:
+                MediaQuery.of(context).size.height *
+                0.1, // Adjust the bottom position dynamically
+            left:
+                MediaQuery.of(context).size.width / 2 -
+                28, // Adjust the left position dynamically
             child: FloatingActionButton(
               onPressed: _toggleFlash,
               backgroundColor: Colors.white,
               child: Icon(
-                isFlashOn ? Icons.flashlight_off : Icons.flashlight_on, // Use flashlight icons
+                isFlashOn
+                    ? Icons.flashlight_off
+                    : Icons.flashlight_on, // Use flashlight icons
                 color: Colors.black,
                 size: 30,
               ),
@@ -62,24 +70,27 @@ class _QRCodeReaderState extends State<QRCodeReader> {
     setState(() {
       this.controller = controller;
     });
-    controller.scannedDataStream.listen((scanData) {
-      if (!mounted) return;
-      setState(() {
-        borderColor = Colors.green;
-        isScanning = false;
-      });
-      Future.delayed(const Duration(seconds: 2), () {
+    controller.scannedDataStream.listen(
+      (scanData) {
         if (!mounted) return;
-        if (Navigator.canPop(context)) {
-          Navigator.pop(context, scanData.code);
-        }
-      });
-    }, onError: (error) {
-      if (!mounted) return;
-      setState(() {
-        borderColor = Colors.red;
-      });
-    });
+        setState(() {
+          borderColor = Colors.green;
+          isScanning = false;
+        });
+        Future.delayed(const Duration(seconds: 2), () {
+          if (!mounted) return;
+          if (Navigator.canPop(context)) {
+            Navigator.pop(context, scanData.code);
+          }
+        });
+      },
+      onError: (error) {
+        if (!mounted) return;
+        setState(() {
+          borderColor = Colors.red;
+        });
+      },
+    );
   }
 
   void _toggleFlash() {

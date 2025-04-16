@@ -1,284 +1,187 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:zuino/screens/product_detail_screen.dart';
-import 'package:zuino/database/products_database.dart';
+import 'package:zuino/utils/logger.dart';
 
 class ProductCard extends StatelessWidget {
-  final String codigo;
+  final String code;
   final String name;
-  final String unit;
-  final double unitValue;
-  final double quantity;
-  final double total;
-  final double used;
   final String? category;
-  final VoidCallback onStockUpdated;
-  final Widget? customFooter; // Add this parameter
+  final Function? onProductAdded;
+  final bool isEditMode;
+  final Function? onEditPressed;
 
-  const ProductCard({
+  ProductCard({
     super.key,
-    required this.codigo,
+    required this.code,
     required this.name,
-    required this.unit,
-    required this.unitValue,
-    required this.quantity,
-    required this.total,
-    required this.used,
     this.category,
-    required this.onStockUpdated,
-    this.customFooter, // Add this parameter
+    this.onProductAdded,
+    this.isEditMode = false,
+    this.onEditPressed,
   });
 
   @override
   Widget build(BuildContext context) {
-    final currentStock = quantity - used;
-    final isOutOfStock = currentStock <= 0;
+    // Get the theme colors
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
+    // Define colors based on theme and edit mode
+    final cardColor =
+        isDarkMode
+            ? (isEditMode ? Colors.grey[800] : Colors.grey[850])
+            : (isEditMode ? Colors.blue[50] : Colors.white);
+
+    final iconColor = isDarkMode ? Colors.blue[300] : Colors.blue[700];
+    final textColor = isDarkMode ? Colors.white : Colors.black87;
 
     return Card(
-      color: isOutOfStock ? Colors.red[400] : Colors.grey[800], // Default color
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 2.0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8.0),
+        side:
+            isEditMode
+                ? BorderSide(color: Colors.blue[400]!, width: 1.0)
+                : BorderSide.none,
+      ),
+      color: cardColor,
       child: Padding(
-        padding: const EdgeInsets.all(8.0), // Reduce padding
-        child: GestureDetector(
-          behavior:
-              HitTestBehavior
-                  .opaque, // Ensure taps are only detected on the card itself
-          onTap: () async {
-            final result = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder:
-                    (context) => ProductDetailScreen(
-                      name: name,
-                      unit: unit,
-                      unitValue: unitValue,
-                      quantity: quantity,
-                      total: total,
-                      used: used,
-                      codigo: codigo,
-                      category: category,
-                    ),
-              ),
-            );
+        padding: const EdgeInsets.all(4.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Icon
+            Expanded(
+              flex: 3,
+              child: Icon(Icons.inventory_2, size: 36.0, color: iconColor),
+            ),
 
-            if (result == true) {
-              onStockUpdated();
-            }
-          },
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.shopping_cart,
-                color: Colors.white,
-                size: 40,
-              ), // Smaller icon
-              const SizedBox(height: 4),
-              Text(
+            // Product name
+            Expanded(
+              flex: 1,
+              child: Text(
                 name,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ), // Smaller font size
                 textAlign: TextAlign.center,
-                maxLines: 1, // Restrict to one line
-                overflow: TextOverflow.ellipsis, // Add ellipsis for overflow
+                style: TextStyle(
+                  fontSize: 11.0,
+                  fontWeight: FontWeight.w500,
+                  color: textColor,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Estoque: ${currentStock.toStringAsFixed(unit == 'kg' ? 3 : 0)} $unit', // Format stock to 3 decimal places
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 12,
-                ), // Smaller font size
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Preço: R\$ ${total.toStringAsFixed(2).replaceAll('.', ',')}',
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 12,
-                ), // Smaller font size
-                textAlign: TextAlign.center,
-              ),
-              const Spacer(),
-              const SizedBox(height: 4), // Add extra spacing above the buttons
-              customFooter ??
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () async {
-                          final result = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder:
-                                  (context) => ProductDetailScreen(
-                                    name: name,
-                                    unit: unit,
-                                    unitValue: unitValue,
-                                    quantity: quantity,
-                                    total: total,
-                                    used: used,
-                                    codigo: codigo,
-                                    category: category,
-                                  ),
-                            ),
-                          );
-
-                          if (result == true) {
-                            onStockUpdated();
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Colors.blueGrey[600], // Opaque blue-grey color
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              16,
-                            ), // Rounded corners
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 12,
-                            horizontal: 16,
-                          ), // Button padding
-                        ),
-                        child: const Icon(
-                          Icons.edit,
-                          color: Colors.white,
-                          size: 24,
-                        ), // Centered edit icon
-                      ),
-                      ElevatedButton(
-                        onPressed:
-                            isOutOfStock
-                                ? () {}
-                                : () async {
-                                  final productsDb = ProductsDatabase();
-                                  final stockBefore = currentStock;
-
-                                  if (unit == 'kg') {
-                                    // Show a modal for entering the amount in kg
-                                    final amountToSpend = await showDialog<
-                                      double
-                                    >(
-                                      context: context,
-                                      builder: (context) {
-                                        final controller =
-                                            TextEditingController(
-                                              text: stockBefore.toStringAsFixed(
-                                                3,
-                                              ), // Default value
-                                            );
-                                        return AlertDialog(
-                                          title: const Text('Gastar em KG'),
-                                          content: TextField(
-                                            controller: controller,
-                                            keyboardType:
-                                                const TextInputType.numberWithOptions(
-                                                  decimal: true,
-                                                ),
-                                            decoration: const InputDecoration(
-                                              labelText: 'Quantidade em KG',
-                                              hintText: 'Ex: 1.234',
-                                            ),
-                                          ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed:
-                                                  () => Navigator.pop(
-                                                    context,
-                                                    null,
-                                                  ), // Cancel
-                                              child: const Text('Cancelar'),
-                                            ),
-                                            TextButton(
-                                              onPressed: () {
-                                                final value = double.tryParse(
-                                                  controller.text,
-                                                );
-                                                if (value != null &&
-                                                    value > 0 &&
-                                                    value <= stockBefore) {
-                                                  Navigator.pop(
-                                                    context,
-                                                    value,
-                                                  ); // Confirm
-                                                } else {
-                                                  ScaffoldMessenger.of(
-                                                    context,
-                                                  ).showSnackBar(
-                                                    const SnackBar(
-                                                      content: Text(
-                                                        'Quantidade inválida',
-                                                      ),
-                                                    ),
-                                                  );
-                                                }
-                                              },
-                                              child: const Text('Confirmar'),
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    );
-
-                                    if (amountToSpend != null) {
-                                      await productsDb.useProduct(
-                                        codigo,
-                                        amountToSpend,
-                                      ); // Deduct the entered amount
-                                      onStockUpdated(); // Notify parent to refresh UI
-                                    }
-                                  } else {
-                                    if (stockBefore >= 1) {
-                                      await productsDb.useProduct(
-                                        codigo,
-                                        1,
-                                      ); // Deduct 1 unit
-                                      onStockUpdated(); // Notify parent to refresh UI
-                                    } else {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Estoque insuficiente para gastar 1 unidade',
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                  }
-                                },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              isOutOfStock
-                                  ? Colors.grey
-                                  : Colors.red[400], // Opaque red color
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              16,
-                            ), // Rounded corners
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 12,
-                            horizontal: 16,
-                          ), // Button padding
-                        ),
-                        child: const Icon(
-                          Icons.remove_circle_outline,
-                          color: Colors.white,
-                          size: 24,
-                        ), // Updated icon
-                      ),
-                    ],
-                  ),
-              const SizedBox(height: 8),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
+    );
+  }
+}
+
+// Add a ShakeWidget to create the shake animation
+class ShakeWidget extends StatefulWidget {
+  final Widget child;
+  final bool isShaking;
+  final double shakeOffset;
+  final Duration duration;
+
+  const ShakeWidget({
+    Key? key,
+    required this.child,
+    this.isShaking = false,
+    this.shakeOffset = 2.0,
+    this.duration = const Duration(milliseconds: 500),
+  }) : super(key: key);
+
+  @override
+  State<ShakeWidget> createState() => _ShakeWidgetState();
+}
+
+class _ShakeWidgetState extends State<ShakeWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _horizontalOffsetAnimation;
+  late Animation<double> _verticalOffsetAnimation;
+  final math.Random _random = math.Random();
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(duration: widget.duration, vsync: this);
+
+    // Initialize animations
+    _updateAnimations();
+
+    if (widget.isShaking) {
+      _startRandomizedShaking();
+    }
+  }
+
+  void _updateAnimations() {
+    // Create horizontal animation with random offset
+    _horizontalOffsetAnimation = Tween<double>(
+      begin: -widget.shakeOffset * (0.5 + _random.nextDouble()),
+      end: widget.shakeOffset * (0.5 + _random.nextDouble()),
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+
+    // Create vertical animation with smaller random offset (1/3 of horizontal)
+    _verticalOffsetAnimation = Tween<double>(
+      begin: -widget.shakeOffset * 0.3 * _random.nextDouble(),
+      end: widget.shakeOffset * 0.3 * _random.nextDouble(),
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  void _startRandomizedShaking() {
+    _controller.forward().then((_) {
+      if (widget.isShaking && mounted) {
+        // Update animations with new random values
+        _updateAnimations();
+        // Add a tiny random delay to make it less predictable
+        Future.delayed(Duration(milliseconds: (_random.nextInt(100))), () {
+          if (mounted && widget.isShaking) {
+            _controller.reset();
+            _startRandomizedShaking();
+          }
+        });
+      }
+    });
+  }
+
+  @override
+  void didUpdateWidget(ShakeWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isShaking && !_controller.isAnimating) {
+      _startRandomizedShaking();
+    } else if (!widget.isShaking && _controller.isAnimating) {
+      _controller.stop();
+      _controller.reset();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.isShaking) {
+      return widget.child;
+    }
+
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(
+            _horizontalOffsetAnimation.value,
+            _verticalOffsetAnimation.value,
+          ),
+          child: child,
+        );
+      },
+      child: widget.child,
     );
   }
 }
