@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:zuino/models/app_user_info.dart'; // Update import
-import 'package:zuino/screens/stock_screen.dart'; // Import the correct StockScreen
+import 'package:zuino/screens/shopping_screen.dart'; // Import the correct StockScreen
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({Key? key}) : super(key: key);
@@ -37,10 +37,7 @@ class _SignupScreenState extends State<SignupScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder:
-                (context) => StockScreen(
-                  title: "Estoque de ${AppUserInfo.name}",
-                ), // Use global user info
+            builder: (context) => ShoppingScreen(), // Use global user info
           ),
         );
       }

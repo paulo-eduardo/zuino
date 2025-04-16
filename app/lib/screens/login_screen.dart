@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:zuino/screens/signup_screen.dart'; // Import the signup screen
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:zuino/screens/stock_screen.dart'; // Ensure correct StockScreen import
+import 'package:zuino/screens/shopping_screen.dart'; // Ensure correct StockScreen import
 import 'package:zuino/models/app_user_info.dart'; // Update import
 
 class LoginScreen extends StatefulWidget {
@@ -42,10 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder:
-                (context) => StockScreen(
-                  title: "Estoque de ${AppUserInfo.name}",
-                ), // Use global user info
+            builder: (context) => ShoppingScreen(), // Use global user info
           ),
         );
       }

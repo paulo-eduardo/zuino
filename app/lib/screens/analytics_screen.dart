@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:zuino/database/inventory_database.dart';
+import 'package:zuino/database/product_database.dart';
 import 'package:zuino/database/receipts_database.dart';
 import 'package:zuino/utils/logger.dart';
 import 'package:fl_chart/fl_chart.dart'; // You'll need to add this package to pubspec.yaml
+import 'package:zuino/models/product.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   const AnalyticsScreen({super.key});
@@ -14,7 +15,7 @@ class AnalyticsScreen extends StatefulWidget {
 class _AnalyticsScreenState extends State<AnalyticsScreen>
     with SingleTickerProviderStateMixin {
   final _logger = Logger('AnalyticsScreen');
-  final _inventoryDb = InventoryDatabase();
+  final _productDb = ProductDatabase();
   final _receiptsDb = ReceiptsDatabase();
 
   bool _isLoading = true;
@@ -55,8 +56,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
     });
 
     try {
-      // Get all inventory items with their categories
-      final inventoryItems = await _inventoryDb.getInventory();
+      // Get all products with their categories
+      final products = await _productDb.getAllProducts();
 
       // Get all receipts to calculate spending
       final receipts = await _receiptsDb.getReceipts();
@@ -77,15 +78,20 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
           final unitValue = double.parse(item['unitValue'].toString());
           final total = quantity * unitValue;
 
-          // Find the product in inventory to get its category
-          final inventoryItem = inventoryItems.firstWhere(
-            (inv) => inv['codigo'] == productCode,
+          // Find the product to get its category
+          final product = products.firstWhere(
+            (p) => p.code == productCode,
             orElse:
-                () => {'category': 'Outros', 'name': 'Produto Desconhecido'},
+                () => Product(
+                  code: productCode,
+                  name: 'Produto Desconhecido',
+                  category: 'Outros',
+                  unit: 'un',
+                ),
           );
 
-          final category = (inventoryItem['category'] as String?) ?? 'Outros';
-          final productName = inventoryItem['name'] as String;
+          final category = product.category;
+          final productName = product.name;
 
           // Update category spending
           categorySpending[category] =
@@ -102,7 +108,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
               'category': category,
               'total': total,
               'quantity': quantity,
-              'unit': inventoryItem['unit'] ?? 'un',
+              'unit': product.unit,
             };
           }
         }
