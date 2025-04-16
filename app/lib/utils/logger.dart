@@ -25,6 +25,13 @@ class Logger {
     }
   }
 
+  void warning(String message, [dynamic error, StackTrace? stackTrace]) {
+    _log('WARNING', '$message ${error != null ? '- $error' : ''}');
+    if (kDebugMode && stackTrace != null) {
+      print(stackTrace);
+    }
+  }
+
   /// Internal logging method that only logs in debug mode
   void _log(String level, String message) {
     if (kDebugMode) {

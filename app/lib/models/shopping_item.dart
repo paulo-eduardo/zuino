@@ -2,7 +2,7 @@ class ShoppingItem {
   final String productCode;
   final double quantity;
 
-  ShoppingItem({required this.productCode, required this.quantity});
+  ShoppingItem({required this.productCode, this.quantity = 1.0});
 
   // Create from Map (for database retrieval)
   factory ShoppingItem.fromMap(Map<String, dynamic> map) {

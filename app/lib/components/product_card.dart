@@ -1,6 +1,9 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:zuino/utils/logger.dart';
+import 'package:zuino/components/base_item_card.dart';
+import 'package:zuino/database/shopping_list_database.dart';
+import 'package:zuino/models/shopping_item.dart';
 
 class ProductCard extends StatelessWidget {
   final String code;
@@ -9,6 +12,8 @@ class ProductCard extends StatelessWidget {
   final Function? onProductAdded;
   final bool isEditMode;
   final Function? onEditPressed;
+  final _logger = Logger('ProductCard');
+  final _shoppingListDb = ShoppingListDatabase();
 
   ProductCard({
     super.key,
@@ -20,60 +25,66 @@ class ProductCard extends StatelessWidget {
     this.onEditPressed,
   });
 
+  Future<void> _addToShoppingList() async {
+    try {
+      _logger.info('Attempting to add product to shopping list: $code');
+
+      // Check if item already exists in shopping list
+      final existingItem = await _shoppingListDb.getItem(code);
+
+      if (existingItem != null) {
+        // If item exists, increment quantity
+        _logger.info(
+          'Product already in shopping list, increasing quantity: $code',
+        );
+        await _shoppingListDb.updateQuantity(code, existingItem.quantity + 1);
+        _logger.info('Increased quantity for item: $code');
+      } else {
+        // If item doesn't exist, add it with quantity 1
+        _logger.info('Adding new product to shopping list: $code');
+        final newItem = ShoppingItem(productCode: code);
+        await _shoppingListDb.addOrUpdateItem(newItem);
+        _logger.info('Added new item to shopping list: $code');
+      }
+
+      // Call the callback to notify parent components
+      if (onProductAdded != null) {
+        onProductAdded!();
+      }
+    } catch (e) {
+      _logger.error('Error adding product to shopping list', e);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Get the theme colors
-    final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
+    return BaseItemCard(
+      name: name,
+      category: category,
+      isEditMode: isEditMode,
+      onTap: () {
+        if (isEditMode && onEditPressed != null) {
+          onEditPressed!();
+        } else if (!isEditMode) {
+          _addToShoppingList();
 
-    // Define colors based on theme and edit mode
-    final cardColor =
-        isDarkMode
-            ? (isEditMode ? Colors.grey[800] : Colors.grey[850])
-            : (isEditMode ? Colors.blue[50] : Colors.white);
-
-    final iconColor = isDarkMode ? Colors.blue[300] : Colors.blue[700];
-    final textColor = isDarkMode ? Colors.white : Colors.black87;
-
-    return Card(
-      elevation: 2.0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8.0),
-        side:
-            isEditMode
-                ? BorderSide(color: Colors.blue[400]!, width: 1.0)
-                : BorderSide.none,
-      ),
-      color: cardColor,
-      child: Padding(
-        padding: const EdgeInsets.all(4.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Icon
-            Expanded(
-              flex: 3,
-              child: Icon(Icons.inventory_2, size: 36.0, color: iconColor),
-            ),
-
-            // Product name
-            Expanded(
-              flex: 1,
-              child: Text(
-                name,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 11.0,
-                  fontWeight: FontWeight.w500,
-                  color: textColor,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+          // Show a snackbar to confirm the item was added
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('$name adicionado à lista de compras'),
+              duration: const Duration(seconds: 1),
+              behavior: SnackBarBehavior.floating,
+              action: SnackBarAction(
+                label: 'Ver Lista',
+                onPressed: () {
+                  // Navigate to shopping list screen
+                  Navigator.pushNamed(context, '/shopping_list');
+                },
               ),
             ),
-          ],
-        ),
-      ),
+          );
+        }
+      },
     );
   }
 }

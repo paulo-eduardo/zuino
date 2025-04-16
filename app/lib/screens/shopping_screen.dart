@@ -22,6 +22,7 @@ class _ShoppingScreenState extends State<ShoppingScreen> {
   final _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
   final _shoppingListKey = GlobalKey<State<ShoppingListSection>>();
   final _shoppingListDb = ShoppingListDatabase();
+  final _productListKey = GlobalKey<State<ProductListSection>>();
 
   // Method to handle receipt scanning
   void _scanReceipt() {
@@ -50,105 +51,80 @@ class _ShoppingScreenState extends State<ShoppingScreen> {
       appBar:
           widget.showHeader
               ? PreferredSize(
-                preferredSize: const Size.fromHeight(
-                  kToolbarHeight + 30,
-                ), // Reduced from +40 to +20
-                child: FutureBuilder<int>(
-                  future: _shoppingListDb.getItemCount(),
-                  builder: (context, snapshot) {
-                    final itemCount = snapshot.data ?? 0;
-                    final subtitle =
-                        itemCount > 0
-                            ? '$itemCount ${itemCount == 1 ? 'item' : 'itens'} na lista'
-                            : 'Sua lista está vazia';
+                preferredSize: const Size.fromHeight(kToolbarHeight + 30),
+                child: Container(
+                  color: const Color(0xFF1E1E1E),
+                  child: SafeArea(
+                    child: FutureBuilder<int>(
+                      future: _shoppingListDb.getItemCount(),
+                      builder: (context, snapshot) {
+                        final itemCount = snapshot.data ?? 0;
+                        final subtitle =
+                            itemCount > 0
+                                ? '$itemCount ${itemCount == 1 ? 'item' : 'itens'} na lista'
+                                : 'Sua lista está vazia';
 
-                    return AppBar(
-                      backgroundColor: const Color(0xFF1E1E1E),
-                      elevation: 0,
-                      automaticallyImplyLeading: false,
-                      toolbarHeight:
-                          kToolbarHeight + 20, // Explicitly set toolbar height
-                      flexibleSpace: SafeArea(
-                        child: Padding(
-                          padding: const EdgeInsets.only(
-                            bottom: 4,
-                          ), // Add a small bottom padding
-                          child: PageHeader(
-                            title: "Lista de Compras",
-                            subtitle: subtitle,
-                            showBackButton: false,
-                            actionButton: IconButton(
-                              icon: const Icon(
-                                Icons.analytics,
-                                color: Colors.blue,
-                                size: 26.0, // Slightly smaller icon
-                              ),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder:
-                                        (context) => const AnalyticsScreen(),
-                                  ),
-                                );
-                              },
-                              tooltip: 'Análise de gastos',
+                        return PageHeader(
+                          title: "Lista de Compras",
+                          subtitle: subtitle,
+                          showBackButton: false,
+                          showAvatar: true,
+                          actionButton: IconButton(
+                            icon: const Icon(
+                              Icons.analytics,
+                              color: Colors.blue,
+                              size: 26.0,
                             ),
-                            onAvatarChanged: () => setState(() {}),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const AnalyticsScreen(),
+                                ),
+                              );
+                            },
+                            tooltip: 'Análise de gastos',
                           ),
-                        ),
-                      ),
-                    );
-                  },
+                          onAvatarChanged: () => setState(() {}),
+                        );
+                      },
+                    ),
+                  ),
                 ),
               )
               : null,
       body: SafeArea(
-        child: Column(
-          children: [
-            // Add some spacing between header and content
-            const SizedBox(height: 8),
+        child: RefreshIndicator(
+          key: _refreshIndicatorKey,
+          onRefresh: _refreshData,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Add some spacing between header and content
+                const SizedBox(height: 8),
 
-            // Scrollable content section
-            Expanded(
-              child: RefreshIndicator(
-                key: _refreshIndicatorKey,
-                onRefresh: _refreshData,
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Shopping List Section
-                      ShoppingListSection(
-                        key: _shoppingListKey,
-                        title: 'Itens na Lista',
-                        onListUpdated: _refreshShoppingList,
-                      ),
+                // Shopping List Section - Make sure it doesn't capture scroll events
+                ShoppingListSection(key: _shoppingListKey),
 
-                      // Divider
-                      const Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 16.0,
-                          vertical: 8.0,
-                        ),
-                        child: Divider(color: Colors.grey),
-                      ),
-
-                      // Product List Section
-                      ProductListSection(
-                        title: 'Produtos Disponíveis',
-                        onListUpdated: _refreshShoppingList,
-                      ),
-
-                      // Bottom padding
-                      const SizedBox(height: 20),
-                    ],
+                // Divider
+                const Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 8.0,
                   ),
+                  child: Divider(color: Colors.grey),
                 ),
-              ),
+
+                // Product List Section - Make sure it doesn't capture scroll events
+                ProductListSection(key: _productListKey),
+
+                // Bottom padding
+                const SizedBox(height: 20),
+              ],
             ),
-          ],
+          ),
         ),
       ),
       // Replace the regular FloatingActionButton with SpeedDialFab
@@ -168,6 +144,12 @@ class _ShoppingScreenState extends State<ShoppingScreen> {
             onTap: _addNewItem,
             backgroundColor: Colors.blue,
           ),
+          SpeedDialItem(
+            icon: Icons.delete_sweep,
+            label: 'Limpar Lista',
+            onTap: _showClearConfirmation,
+            backgroundColor: Colors.red,
+          ),
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
@@ -177,10 +159,13 @@ class _ShoppingScreenState extends State<ShoppingScreen> {
   // Refresh both sections
   Future<void> _refreshData() async {
     _logger.info('Refreshing shopping screen data');
-    setState(() {
-      // Force rebuild of both sections
-    });
+
+    // Refresh shopping list
     _refreshShoppingList();
+
+    // Refresh product list
+    _refreshProductList();
+
     return Future.delayed(const Duration(milliseconds: 300));
   }
 
@@ -191,6 +176,17 @@ class _ShoppingScreenState extends State<ShoppingScreen> {
       setState(() {
         // This will force the shopping list section to rebuild
         _shoppingListKey.currentState!.setState(() {});
+      });
+    }
+  }
+
+  // Refresh only the product list section
+  void _refreshProductList() {
+    _logger.info('Refreshing product list');
+    if (_productListKey.currentState != null) {
+      setState(() {
+        // This will force the product list section to rebuild
+        _productListKey.currentState!.setState(() {});
       });
     }
   }
@@ -231,7 +227,9 @@ class _ShoppingScreenState extends State<ShoppingScreen> {
     try {
       _logger.info('Clearing shopping list');
 
+      // Call the database to clear the shopping list
       await _shoppingListDb.clearAll();
+
       _refreshShoppingList();
 
       if (mounted) {

@@ -59,9 +59,11 @@ class ProductDatabase {
       final data = box.get(code);
 
       if (data == null) {
+        _logger.info('Product not found in database: $code');
         return null;
       }
 
+      _logger.info('Retrieved product from database: $code');
       return Product.fromMap(Map<String, dynamic>.from(data));
     } catch (e) {
       _logger.error('Error getting product: $e');

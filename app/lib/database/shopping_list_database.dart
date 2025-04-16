@@ -1,4 +1,5 @@
-import 'package:hive/hive.dart';
+import 'package:flutter/foundation.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:zuino/models/shopping_item.dart';
 import 'package:zuino/utils/logger.dart';
 
@@ -6,28 +7,90 @@ class ShoppingListDatabase {
   final _logger = Logger('ShoppingListDatabase');
   final String _boxName = 'shopping_list';
 
+  // Get a ValueListenable for the shopping list box
+  Future<ValueListenable<Box<dynamic>>> getListenable() async {
+    try {
+      // Make sure the box is open before getting the listenable
+      final box = await Hive.openBox(_boxName);
+      return box.listenable();
+    } catch (e) {
+      _logger.error('Error getting shopping list listenable', e);
+      rethrow; // Using rethrow instead of throw e
+    }
+  }
+
   // Get all shopping list items
   Future<List<ShoppingItem>> getAllItems() async {
     try {
       final box = await Hive.openBox(_boxName);
       final items = <ShoppingItem>[];
 
-      for (var key in box.keys) {
-        final item = box.get(key);
-        if (item != null && item is Map) {
+      _logger.info(
+        'Getting all shopping list items, box keys: ${box.keys.toList()}',
+      );
+
+      for (final key in box.keys) {
+        final data = box.get(key);
+        if (data != null) {
           try {
-            items.add(ShoppingItem.fromMap(Map<String, dynamic>.from(item)));
-          } catch (e) {
-            _logger.error('Error parsing shopping item: $item', e);
+            // Handle both Map and non-Map data formats
+            if (data is Map) {
+              // If it's already a Map, use it directly
+              final item = ShoppingItem.fromMap(
+                Map<String, dynamic>.from(data),
+              );
+              items.add(item);
+              _logger.info(
+                'Retrieved shopping item: ${item.productCode}, quantity: ${item.quantity}',
+              );
+            } else {
+              // If it's not a Map, create a simple item with the key as the product code
+              final item = ShoppingItem(
+                productCode: key.toString(),
+                quantity: 1.0,
+              );
+              items.add(item);
+              _logger.info(
+                'Retrieved legacy shopping item: ${item.productCode}',
+              );
+
+              // Optionally, update the item in the database to the new format
+              await box.put(key, item.toMap());
+            }
+          } catch (e, stackTrace) {
+            _logger.error(
+              'Error parsing shopping item with key $key: $e',
+              e,
+              stackTrace,
+            );
+
+            // Try to recover by creating a simple item with the key as the product code
+            try {
+              final item = ShoppingItem(
+                productCode: key.toString(),
+                quantity: 1.0,
+              );
+              items.add(item);
+              _logger.info('Recovered shopping item: ${item.productCode}');
+
+              // Update the item in the database to the new format
+              await box.put(key, item.toMap());
+            } catch (e2) {
+              _logger.error(
+                'Failed to recover shopping item with key $key: $e2',
+              );
+            }
           }
+        } else {
+          _logger.info('Null data found for key: $key');
         }
       }
 
       _logger.info('Retrieved ${items.length} shopping list items');
       return items;
-    } catch (e) {
-      _logger.error('Error getting shopping list items', e);
-      return [];
+    } catch (e, stackTrace) {
+      _logger.error('Error getting all items', e, stackTrace);
+      throw Exception('Failed to get all items: $e');
     }
   }
 
@@ -35,11 +98,13 @@ class ShoppingListDatabase {
   Future<void> addOrUpdateItem(ShoppingItem item) async {
     try {
       final box = await Hive.openBox(_boxName);
+      _logger.info(
+        'Adding/updating item in shopping list: ${item.productCode}',
+      );
       await box.put(item.productCode, item.toMap());
-      _logger.info('Added/updated shopping item: ${item.productCode}');
     } catch (e) {
-      _logger.error('Error adding/updating shopping item', e);
-      throw e;
+      _logger.error('Error adding/updating item: ${item.productCode}', e);
+      throw Exception('Failed to add/update item: $e');
     }
   }
 
@@ -64,10 +129,10 @@ class ShoppingListDatabase {
     try {
       final box = await Hive.openBox(_boxName);
       await box.delete(productCode);
-      _logger.info('Removed shopping item: $productCode');
+      _logger.info('Removed item $productCode from shopping list');
     } catch (e) {
-      _logger.error('Error removing shopping item: $productCode', e);
-      throw e;
+      _logger.error('Error removing item: $productCode', e);
+      rethrow;
     }
   }
 
@@ -87,7 +152,38 @@ class ShoppingListDatabase {
       }
     } catch (e) {
       _logger.error('Error updating quantity for item: $productCode', e);
-      throw e;
+      rethrow;
+    }
+  }
+
+  // Increment the quantity of a shopping list item
+  Future<void> incrementQuantity(String productCode, double amount) async {
+    try {
+      final box = await Hive.openBox(_boxName);
+      final item = box.get(productCode);
+
+      if (item != null && item is Map) {
+        final currentQuantity = (item['quantity'] as num).toDouble();
+        final newQuantity = currentQuantity + amount;
+
+        if (newQuantity <= 0) {
+          // If quantity is zero or negative, remove the item
+          await removeItem(productCode);
+        } else {
+          // Otherwise update the quantity
+          final updatedItem = Map<String, dynamic>.from(item);
+          updatedItem['quantity'] = newQuantity;
+          await box.put(productCode, updatedItem);
+          _logger.info(
+            'Updated quantity for item $productCode to $newQuantity',
+          );
+        }
+      } else {
+        throw Exception('Item not found in shopping list');
+      }
+    } catch (e) {
+      _logger.error('Error updating quantity for item: $productCode', e);
+      rethrow;
     }
   }
 
@@ -99,7 +195,7 @@ class ShoppingListDatabase {
       _logger.info('Cleared all shopping list items');
     } catch (e) {
       _logger.error('Error clearing shopping list', e);
-      throw e;
+      rethrow;
     }
   }
 

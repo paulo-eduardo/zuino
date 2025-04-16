@@ -1,84 +1,64 @@
 import 'package:flutter/material.dart';
-import 'package:zuino/components/shopping_item_card.dart';
-import 'package:zuino/database/product_database.dart';
-import 'package:zuino/database/shopping_list_database.dart';
-import 'package:zuino/models/shopping_item.dart';
-import 'package:zuino/utils/logger.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import '../database/shopping_list_database.dart';
+import '../models/shopping_item.dart';
+import '../utils/logger.dart';
+import '../components/shopping_item_card.dart';
 
 class ShoppingListSection extends StatefulWidget {
-  final String title;
-  final VoidCallback? onListUpdated;
+  final VoidCallback? onListChanged;
 
-  const ShoppingListSection({
-    super.key,
-    required this.title,
-    this.onListUpdated,
-  });
+  const ShoppingListSection({super.key, this.onListChanged});
 
   @override
   State<ShoppingListSection> createState() => _ShoppingListSectionState();
 }
 
 class _ShoppingListSectionState extends State<ShoppingListSection> {
-  final _logger = Logger('ShoppingListSection');
-  final _shoppingListDb = ShoppingListDatabase();
-  final _productDb = ProductDatabase();
-  List<ShoppingItem> _items = [];
+  final ShoppingListDatabase _shoppingListDb = ShoppingListDatabase();
+  final Logger _logger = Logger('ShoppingListSection');
+
   bool _isLoading = true;
-  double _totalPrice = 0.0;
+  bool _hasError = false;
+  late Box _shoppingListBox;
 
   @override
   void initState() {
     super.initState();
-    _loadItems();
+    _logger.info('ShoppingListSection initialized');
+    _loadShoppingList();
   }
 
-  Future<void> _loadItems() async {
+  Future<void> _loadShoppingList() async {
     try {
-      setState(() {
-        _isLoading = true;
-      });
+      _logger.info('Loading shopping list');
+      _shoppingListBox = await Hive.openBox('shopping_list');
+      _logger.info(
+        'Shopping list box opened, keys: ${_shoppingListBox.keys.length}',
+      );
 
-      // Load items first
-      final items = await _shoppingListDb.getAllItems();
-
-      // Update UI with items immediately
-      if (mounted) {
-        setState(() {
-          _items = items;
-          _isLoading = false;
-        });
-      }
-
-      // Calculate total price in parallel
-      _calculateTotalPrice(items);
-    } catch (e) {
-      _logger.error('Error loading shopping list items', e);
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
       }
-    }
-  }
-
-  // Separate method to calculate total price
-  Future<void> _calculateTotalPrice(List<ShoppingItem> items) async {
-    try {
-      final totalPrice = await _productDb.calculateTotalPrice(items);
-
+    } catch (e) {
+      _logger.error('Error loading shopping list', e);
       if (mounted) {
         setState(() {
-          _totalPrice = totalPrice;
+          _isLoading = false;
+          _hasError = true;
         });
       }
-    } catch (e) {
-      _logger.error('Error calculating total price', e);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    _logger.info(
+      'Building ShoppingListSection, isLoading: $_isLoading, hasError: $_hasError',
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -88,61 +68,136 @@ class _ShoppingListSectionState extends State<ShoppingListSection> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                widget.title,
-                style: const TextStyle(
+              const Text(
+                'Lista de Compras',
+                style: TextStyle(
                   fontSize: 20.0,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
               ),
-              // Total price
-              Text(
-                'Total: R\$ ${_totalPrice.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontSize: 18.0,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF4CAF50),
-                ),
+              // Clear list button
+              IconButton(
+                icon: const Icon(Icons.delete_outline, color: Colors.white),
+                onPressed: () {
+                  // Show confirmation dialog
+                  showDialog(
+                    context: context,
+                    builder:
+                        (context) => AlertDialog(
+                          title: const Text('Limpar lista'),
+                          content: const Text(
+                            'Tem certeza que deseja limpar toda a lista de compras?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Cancelar'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _shoppingListDb.clearAll();
+                                if (widget.onListChanged != null) {
+                                  widget.onListChanged!();
+                                }
+                              },
+                              child: const Text('Limpar'),
+                            ),
+                          ],
+                        ),
+                  );
+                },
               ),
             ],
           ),
         ),
 
-        // Loading indicator or grid
-        _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _items.isEmpty
-            ? const Center(
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text(
-                  'Nenhum item na lista de compras',
-                  style: TextStyle(color: Colors.white70),
-                ),
-              ),
-            )
-            : Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  childAspectRatio: 0.7,
-                  crossAxisSpacing: 4.0,
-                  mainAxisSpacing: 4.0,
-                ),
-                itemCount: _items.length,
-                itemBuilder: (context, index) {
-                  final item = _items[index];
-                  return ShoppingItemCard(
-                    item: item,
-                    key: ValueKey(item.productCode),
-                  );
-                },
+        // Content based on state
+        if (_isLoading)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.all(24.0),
+              child: CircularProgressIndicator(),
+            ),
+          )
+        else if (_hasError)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                children: [
+                  const Text(
+                    'Erro ao carregar lista de compras',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _loadShoppingList,
+                    child: const Text('Tentar novamente'),
+                  ),
+                ],
               ),
             ),
+          )
+        else
+          ValueListenableBuilder(
+            valueListenable: _shoppingListBox.listenable(),
+            builder: (context, box, _) {
+              _logger.info(
+                'ValueListenableBuilder rebuilding, box keys: ${box.keys.length}',
+              );
+
+              final List<ShoppingItem> items = [];
+              for (var key in box.keys) {
+                _logger.info(
+                  'Processing item with key: $key, value type: ${box.get(key).runtimeType}',
+                );
+                final data = box.get(key);
+                if (data != null) {
+                  final item = ShoppingItem.fromMap(
+                    Map<String, dynamic>.from(data),
+                  );
+                  items.add(item);
+                }
+              }
+
+              _logger.info('Processed ${items.length} shopping items');
+
+              if (items.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: Center(
+                    child: Text(
+                      'Sua lista de compras está vazia',
+                      style: TextStyle(color: Colors.white70, fontSize: 16),
+                    ),
+                  ),
+                );
+              }
+
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    childAspectRatio: 1.0, // Perfect square
+                    crossAxisSpacing: 0,
+                    mainAxisSpacing: 0,
+                  ),
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    // Use your own custom widget or direct implementation here
+                    // instead of ShoppingItemCard
+                    return Card(child: ShoppingItemCard(item: item));
+                  },
+                ),
+              );
+            },
+          ),
       ],
     );
   }
