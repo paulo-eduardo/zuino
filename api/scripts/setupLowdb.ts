@@ -1,5 +1,5 @@
+import * as fs from "fs";
 import * as path from "path";
-
 import { LowSync } from "lowdb";
 import { JSONFileSync } from "lowdb/node";
 
@@ -12,98 +12,63 @@ interface DbSchema {
   }>;
 }
 
-const initialData: DbSchema = {
+const __dirname = process.cwd();
+const dbFilePath = path.join(__dirname, "config/categories_lowdb.json");
+const initialKeywordsPath = path.join(
+  __dirname,
+  "config/keywords_initial.json",
+);
+
+// Default initial data if keywords_initial.json doesn't exist or is invalid
+const defaultInitialData: DbSchema = {
   DEFAULT_CATEGORY: "Outros",
-  categories: [
-    // --- PASTE or DEFINE your categories array here ---
-    // (Using a smaller example set for brevity in the script)
-    {
-      name: "Alimentos Básicos",
-      keywords: [
-        "ARROZ",
-        "FEIJÃO",
-        "MACARRÃO",
-        "MAC ",
-        "LAMEN",
-        "MIOJO",
-        "FARINHA",
-        "AÇÚCAR",
-        "ACUCAR",
-        "SAL",
-        "ÓLEO",
-        "OLEO",
-        "AZEITE",
-      ],
-    },
-    {
-      name: "Bebidas",
-      keywords: [
-        "REFRIGERANTE",
-        "SUCO",
-        "ÁGUA",
-        "AGUA",
-        "LEITE",
-        "CERVEJA",
-        "VINHO",
-        "CACHAÇA",
-        "ENERGETICO",
-        "REFRESCO",
-        "GUARANA",
-      ],
-    },
-    {
-      name: "Limpeza",
-      keywords: [
-        "DETERGENTE",
-        "DETERG",
-        "SABÃO",
-        "SABAO",
-        "LIMPOL",
-        "DESINFETANTE",
-        "ÁGUA SANITÁRIA",
-        "AGUA SANITARIA",
-        "LIMPADOR",
-        "ESPONJA",
-        "LUSTRA",
-        "AMACIANTE",
-        "ALVEJANTE",
-      ],
-    },
-    {
-      name: "Utilidades",
-      keywords: [
-        "ISQUEIRO",
-        "FÓSFORO",
-        "FOSFORO",
-        "VELA",
-        "PILHA",
-        "BATERIA",
-        "LÂMPADA",
-        "LAMPADA",
-        "GUARDANAPO",
-      ],
-    },
-    {
-      name: "Café e Chá",
-      keywords: ["CAFE", "CAFÉ", "CHÁ", "CHA", "CAPPUCCINO", "FILTRO DE PAPEL"],
-    },
-    // --- Add the rest of your desired initial categories ---
-  ],
+  categories: [],
 };
 
-const __dirname = process.cwd();
-const file = path.join(__dirname, "config/categories_lowdb.json");
-const adapter = new JSONFileSync<DbSchema>(file);
-
-// Use the DbSchema type for the LowSync instance
-const db = new LowSync<DbSchema>(adapter, initialData);
+// Try to load initial data from keywords_initial.json
+let initialData: DbSchema;
 
 try {
-  db.read();
+  // Check if the initial keywords file exists
+  if (fs.existsSync(initialKeywordsPath)) {
+    console.log(`📄 Loading initial data from: ${initialKeywordsPath}`);
+    const fileContent = fs.readFileSync(initialKeywordsPath, "utf8");
+    const parsedData = JSON.parse(fileContent);
 
+    // Validate the structure
+    if (parsedData.DEFAULT_CATEGORY && Array.isArray(parsedData.categories)) {
+      initialData = parsedData;
+      console.log(
+        `✅ Successfully loaded initial data with ${parsedData.categories.length} categories`,
+      );
+    } else {
+      console.warn(
+        `⚠️ Invalid format in keywords_initial.json, using default structure`,
+      );
+      initialData = defaultInitialData;
+    }
+  } else {
+    console.log(`⚠️ No keywords_initial.json found at: ${initialKeywordsPath}`);
+    console.log(`   Using default initial data`);
+    initialData = defaultInitialData;
+  }
+
+  // Ensure the config directory exists
+  const configDir = path.dirname(dbFilePath);
+  if (!fs.existsSync(configDir)) {
+    fs.mkdirSync(configDir, { recursive: true });
+    console.log(`📁 Created config directory: ${configDir}`);
+  }
+
+  // Initialize the database
+  const adapter = new JSONFileSync<DbSchema>(dbFilePath);
+  const db = new LowSync<DbSchema>(adapter, initialData);
+
+  // Read (to merge with any existing data) and write
+  db.read();
   db.write();
 
-  console.log(`✅ LowDB database initialized successfully at: ${file}`);
+  console.log(`✅ LowDB database initialized successfully at: ${dbFilePath}`);
   console.log(`   - Default Category: ${db.data.DEFAULT_CATEGORY}`);
   console.log(`   - Number of Categories: ${db.data.categories.length}`);
 } catch (error) {
