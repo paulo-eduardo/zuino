@@ -154,8 +154,26 @@ class BaseItemCard extends StatelessWidget {
   }
 
   IconData _getCategoryIcon(String? category) {
-    // Your existing icon logic
-    return Icons.shopping_bag; // Default icon
+    if (category == null) return Icons.shopping_bag; // Default icon
+
+    switch (category.toLowerCase()) {
+      case 'essenciais':
+        return Icons.kitchen; // Kitchen essentials like rice, beans, etc.
+      case 'hortifruti':
+        return Icons.eco; // Fruits and vegetables
+      case 'proteinas':
+        return Icons.egg_alt; // Proteins like meat, eggs, etc.
+      case 'limpeza e higiene':
+        return Icons.cleaning_services; // Cleaning products
+      case 'guloseimas':
+        return Icons.cake; // Sweets and treats
+      case 'bazar':
+        return Icons.shopping_basket; // General household items
+      case 'bebidas':
+        return Icons.local_drink; // Drinks
+      default:
+        return Icons.help_outline; // Question mark for unknown categories
+    }
   }
 
   Widget _buildShimmerEffect({required Widget child}) {
