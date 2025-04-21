@@ -40,10 +40,9 @@ class _ProductListSectionState extends State<ProductListSection> {
       final listenable = await _productDb.getListenable();
 
       if (mounted) {
-        setState(() {
-          _productsListenable = listenable;
-          _isLoading = false;
-        });
+        // Set the listenable and load products initially
+        _productsListenable = listenable;
+        await _loadProducts();
       }
     } catch (e, stackTrace) {
       _logger.error('Error setting up products listenable', e, stackTrace);
@@ -62,13 +61,25 @@ class _ProductListSectionState extends State<ProductListSection> {
     }
   }
 
-  Future<List<Product>> _loadProducts() async {
+  Future<void> _loadProducts() async {
     try {
+      // Get the products directly without using FutureBuilder in the UI
       final products = await _productDb.getAllProducts();
-      return products;
+
+      if (mounted) {
+        setState(() {
+          _products = products;
+          _isLoading = false;
+        });
+      }
     } catch (e, stackTrace) {
       _logger.error('Error loading products', e, stackTrace);
-      rethrow; // Using rethrow instead of throw e
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Erro ao carregar produtos: ${e.toString()}';
+        });
+      }
     }
   }
 
@@ -97,117 +108,97 @@ class _ProductListSectionState extends State<ProductListSection> {
     return ValueListenableBuilder(
       valueListenable: _productsListenable!,
       builder: (context, box, _) {
-        return FutureBuilder<List<Product>>(
-          future: _loadProducts(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
+        // When the box changes, load products but don't show loading indicator
+        // This prevents flickering
+        _loadProducts();
 
-            if (snapshot.hasError) {
-              return Center(
-                child: Text(
-                  'Error: ${snapshot.error}',
-                  style: const TextStyle(color: Colors.red),
-                ),
-              );
-            }
+        // If we have no products yet, show a message
+        if (_products.isEmpty) {
+          return const Center(child: Text('No products found'));
+        }
 
-            if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return const Center(child: Text('No products found'));
-            }
-
-            _products = snapshot.data!;
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Section header with edit toggle
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0,
-                    vertical: 8.0,
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Section header with edit toggle
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Produtos',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Produtos',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                  if (true)
+                    IconButton(
+                      icon: Icon(
+                        _isEditMode ? Icons.check : Icons.edit,
+                        color: Colors.blue,
                       ),
-                      if (true)
-                        IconButton(
-                          icon: Icon(
-                            _isEditMode ? Icons.check : Icons.edit,
-                            color: Colors.blue,
-                          ),
-                          onPressed: _toggleEditMode,
-                        ),
-                    ],
-                  ),
+                      onPressed: _toggleEditMode,
+                    ),
+                ],
+              ),
+            ),
+
+            // Product grid
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  childAspectRatio: 1.0,
+                  crossAxisSpacing: 0,
+                  mainAxisSpacing: 0,
                 ),
+                itemCount: _products.length,
+                itemBuilder: (context, index) {
+                  final product = _products[index];
 
-                // Product grid
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          childAspectRatio: 1.0,
-                          crossAxisSpacing: 0,
-                          mainAxisSpacing: 0,
-                        ),
-                    itemCount: _products.length,
-                    itemBuilder: (context, index) {
-                      final product = _products[index];
+                  // Calculate position in grid
+                  final int row =
+                      index ~/ 3; // Integer division by 3 (crossAxisCount)
+                  final int col = index % 3; // Remainder when divided by 3
 
-                      // Calculate position in grid
-                      final int row =
-                          index ~/ 3; // Integer division by 3 (crossAxisCount)
-                      final int col = index % 3; // Remainder when divided by 3
+                  // Determine which corners should be rounded
+                  final bool roundTopLeft = row == 0 && col == 0;
+                  final bool roundTopRight = row == 0 && col == 2;
 
-                      // Determine which corners should be rounded
-                      final bool roundTopLeft = row == 0 && col == 0;
-                      final bool roundTopRight = row == 0 && col == 2;
+                  // Check if this is the last row
+                  final bool isLastRow = row == (_products.length - 1) ~/ 3;
 
-                      // Check if this is the last row
-                      final bool isLastRow = row == (_products.length - 1) ~/ 3;
+                  // For the last row, we need to check if it's a full row
+                  final bool isFullLastRow = _products.length % 3 == 0;
 
-                      // For the last row, we need to check if it's a full row
-                      final bool isFullLastRow = _products.length % 3 == 0;
+                  // Adjust bottom corners for partial last rows
+                  final bool adjustedRoundBottomLeft = isLastRow && col == 0;
+                  final bool adjustedRoundBottomRight =
+                      isLastRow &&
+                      (isFullLastRow
+                          ? col == 2
+                          : col == (_products.length % 3) - 1);
 
-                      // Adjust bottom corners for partial last rows
-                      final bool adjustedRoundBottomLeft =
-                          isLastRow && col == 0;
-                      final bool adjustedRoundBottomRight =
-                          isLastRow &&
-                          (isFullLastRow
-                              ? col == 2
-                              : col == (_products.length % 3) - 1);
-
-                      return ProductCard(
-                        key: ValueKey(product.code),
-                        code: product.code,
-                        name: product.name,
-                        category: product.category,
-                        isEditMode: _isEditMode,
-                        roundTopLeft: roundTopLeft,
-                        roundTopRight: roundTopRight,
-                        roundBottomLeft: adjustedRoundBottomLeft,
-                        roundBottomRight: adjustedRoundBottomRight,
-                      );
-                    },
-                  ),
-                ),
-              ],
-            );
-          },
+                  return ProductCard(
+                    key: ValueKey(product.code),
+                    code: product.code,
+                    name: product.name,
+                    category: product.category,
+                    isEditMode: _isEditMode,
+                    roundTopLeft: roundTopLeft,
+                    roundTopRight: roundTopRight,
+                    roundBottomLeft: adjustedRoundBottomLeft,
+                    roundBottomRight: adjustedRoundBottomRight,
+                  );
+                },
+              ),
+            ),
+          ],
         );
       },
     );
