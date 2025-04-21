@@ -158,21 +158,20 @@ class BaseItemCard extends StatelessWidget {
 
     switch (category.toLowerCase()) {
       case 'essenciais':
-        return Icons.kitchen; // Kitchen essentials like rice, beans, etc.
+        return Icons.restaurant; // Better icon for essentials like rice, beans
       case 'hortifruti':
-        return Icons.eco; // Fruits and vegetables
-      case 'proteinas':
-        return Icons.egg_alt; // Proteins like meat, eggs, etc.
+        return Icons.eco; // Better icon for fruits and vegetables
       case 'limpeza e higiene':
-        return Icons.cleaning_services; // Cleaning products
+        return Icons.wash; // Better icon for cleaning and hygiene products
       case 'guloseimas':
-        return Icons.cake; // Sweets and treats
+        return Icons.cookie; // Better icon for sweets and treats
       case 'bazar':
-        return Icons.shopping_basket; // General household items
+        return Icons.construction; // Better icon for household items
       case 'bebidas':
-        return Icons.local_drink; // Drinks
+        return Icons.liquor; // Better icon for drinks
       default:
-        return Icons.help_outline; // Question mark for unknown categories
+        return Icons
+            .help_outline; // Subtle question mark for uncategorized items
     }
   }
 
