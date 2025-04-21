@@ -192,6 +192,7 @@ class _ProductListSectionState extends State<ProductListSection> {
                               : col == (_products.length % 3) - 1);
 
                       return ProductCard(
+                        key: ValueKey(product.code),
                         code: product.code,
                         name: product.name,
                         category: product.category,

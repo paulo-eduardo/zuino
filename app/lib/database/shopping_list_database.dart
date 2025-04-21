@@ -6,6 +6,32 @@ import 'package:zuino/utils/logger.dart';
 class ShoppingListDatabase {
   final _logger = Logger('ShoppingListDatabase');
   final String _boxName = 'shopping_list';
+  final String _counterKey = '_counter'; // Special key to store the counter
+
+  // Get the next available ID
+  Future<int> _getNextId() async {
+    try {
+      final box = await Hive.openBox(_boxName);
+      int counter = 0;
+
+      // Get the current counter value
+      final counterValue = box.get(_counterKey);
+      if (counterValue != null && counterValue is int) {
+        counter = counterValue;
+      }
+
+      // Increment the counter
+      counter++;
+
+      // Save the new counter value
+      await box.put(_counterKey, counter);
+
+      return counter;
+    } catch (e) {
+      _logger.error('Error getting next ID', e);
+      throw Exception('Failed to get next ID: $e');
+    }
+  }
 
   // Get a ValueListenable for the shopping list box
   Future<ValueListenable<Box<dynamic>>> getListenable() async {
@@ -26,6 +52,9 @@ class ShoppingListDatabase {
       final items = <ShoppingItem>[];
 
       for (final key in box.keys) {
+        // Skip the counter key
+        if (key == _counterKey) continue;
+
         final data = box.get(key);
         if (data != null) {
           try {
@@ -80,11 +109,50 @@ class ShoppingListDatabase {
     }
   }
 
+  // Get all shopping list items sorted by ID (newest first)
+  Future<List<ShoppingItem>> getAllItemsSortedById() async {
+    try {
+      final items = await getAllItems();
+
+      // Sort items by ID (descending order - newest first)
+      items.sort((a, b) {
+        final aId = a.id ?? 0;
+        final bId = b.id ?? 0;
+        return aId.compareTo(bId); // Always sort from higher ID to lower ID
+      });
+
+      return items;
+    } catch (e) {
+      _logger.error('Error getting sorted items', e);
+      throw Exception('Failed to get sorted items: $e');
+    }
+  }
+
   // Add or update a shopping list item
   Future<void> addOrUpdateItem(ShoppingItem item) async {
     try {
       final box = await Hive.openBox(_boxName);
-      await box.put(item.productCode, item.toMap());
+
+      // Check if the item already exists
+      final existingData = box.get(item.productCode);
+
+      if (existingData != null) {
+        // Item exists, preserve its ID if it has one
+        if (existingData is Map && existingData.containsKey('id')) {
+          final updatedItem = item.copyWith(id: existingData['id'] as int?);
+          await box.put(item.productCode, updatedItem.toMap());
+        } else {
+          // Existing item doesn't have an ID, assign one
+          final nextId = await _getNextId();
+          final updatedItem = item.copyWith(id: nextId);
+          await box.put(item.productCode, updatedItem.toMap());
+        }
+      } else {
+        // New item, assign a new ID
+        final nextId = await _getNextId();
+        final updatedItem = item.copyWith(id: nextId);
+        await box.put(item.productCode, updatedItem.toMap());
+      }
     } catch (e) {
       _logger.error('Error adding/updating item: ${item.productCode}', e);
       throw Exception('Failed to add/update item: $e');
@@ -170,6 +238,8 @@ class ShoppingListDatabase {
     try {
       final box = await Hive.openBox(_boxName);
       await box.clear();
+      // Reset the counter to 0
+      await box.put(_counterKey, 0);
     } catch (e) {
       _logger.error('Error clearing shopping list', e);
       rethrow;
@@ -191,7 +261,7 @@ class ShoppingListDatabase {
   Future<int> getItemCount() async {
     try {
       final box = await Hive.openBox(_boxName);
-      return box.length;
+      return box.length - 1; // Subtract 1 to exclude the counter key
     } catch (e) {
       _logger.error('Error getting item count', e);
       return 0;

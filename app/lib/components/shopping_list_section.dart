@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../database/shopping_list_database.dart';
 import '../models/shopping_item.dart';
@@ -22,27 +23,60 @@ class _ShoppingListSectionState extends State<ShoppingListSection> {
 
   bool _isLoading = true;
   bool _hasError = false;
-  late Box _shoppingListBox;
+  late ValueListenable<Box<dynamic>> _shoppingListListenable;
   double _totalAmount = 0.0;
+  List<ShoppingItem> _items = []; // Added to store items
 
   @override
   void initState() {
     super.initState();
-    _loadShoppingList();
+    _initializeShoppingList();
+  }
+
+  Future<void> _initializeShoppingList() async {
+    try {
+      final listenable = await _shoppingListDb.getListenable();
+
+      if (mounted) {
+        setState(() {
+          _shoppingListListenable = listenable;
+
+          // Add a listener that will update the UI when the box changes
+          _shoppingListListenable.addListener(() {
+            // This will trigger a rebuild of the ValueListenableBuilder
+            // but we'll handle the data fetching more efficiently
+            if (mounted) {
+              _loadShoppingList();
+            }
+          });
+        });
+
+        // Now that we have the listenable, load the shopping list
+        _loadShoppingList();
+      }
+    } catch (e) {
+      _logger.error('Error initializing shopping list listenable', e);
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+        });
+      }
+    }
   }
 
   Future<void> _loadShoppingList() async {
     try {
-      _shoppingListBox = await Hive.openBox('shopping_list');
+      // Get the items directly without using FutureBuilder in the UI
+      final items = await _shoppingListDb.getAllItemsSortedById();
 
-      // Add a listener to the box to update the total amount when it changes
-      _shoppingListBox.listenable().addListener(_calculateTotalAmount);
-
-      // Calculate the initial total amount
-      await _calculateTotalAmount();
+      // Calculate the total amount
+      final total = await _productDb.calculateTotalPrice(items);
 
       if (mounted) {
         setState(() {
+          _items = items;
+          _totalAmount = total;
           _isLoading = false;
         });
       }
@@ -60,7 +94,7 @@ class _ShoppingListSectionState extends State<ShoppingListSection> {
   @override
   void dispose() {
     // Remove the listener when the widget is disposed
-    _shoppingListBox.listenable().removeListener(_calculateTotalAmount);
+    _shoppingListListenable.removeListener(_loadShoppingList);
     super.dispose();
   }
 
@@ -76,8 +110,7 @@ class _ShoppingListSectionState extends State<ShoppingListSection> {
 
   Future<void> _calculateTotalAmount() async {
     try {
-      final items = await _shoppingListDb.getAllItems();
-      final total = await _productDb.calculateTotalPrice(items);
+      final total = await _productDb.calculateTotalPrice(_items);
 
       if (mounted) {
         setState(() {
@@ -159,24 +192,10 @@ class _ShoppingListSectionState extends State<ShoppingListSection> {
           )
         else
           ValueListenableBuilder(
-            valueListenable: _shoppingListBox.listenable(),
+            valueListenable: _shoppingListListenable,
             builder: (context, box, _) {
-              final List<ShoppingItem> items = [];
-              for (var key in box.keys) {
-                final data = box.get(key);
-                if (data != null) {
-                  try {
-                    final item = ShoppingItem.fromMap(
-                      Map<String, dynamic>.from(data),
-                    );
-                    items.add(item);
-                  } catch (e) {
-                    _logger.error('Error parsing item data for key $key', e);
-                  }
-                }
-              }
-
-              if (items.isEmpty) {
+              // Use the items we've already loaded in state
+              if (_items.isEmpty) {
                 return const Padding(
                   padding: EdgeInsets.all(24.0),
                   child: Center(
@@ -199,9 +218,9 @@ class _ShoppingListSectionState extends State<ShoppingListSection> {
                     crossAxisSpacing: 0,
                     mainAxisSpacing: 0,
                   ),
-                  itemCount: items.length,
+                  itemCount: _items.length,
                   itemBuilder: (context, index) {
-                    final item = items[index];
+                    final item = _items[index];
 
                     // Calculate position in grid
                     final int row =
@@ -212,11 +231,12 @@ class _ShoppingListSectionState extends State<ShoppingListSection> {
                     final bool roundTopLeft = row == 0 && col == 0;
                     final bool roundTopRight = row == 0 && col == 2;
                     final bool roundBottomLeft =
-                        (row == (items.length - 1) ~/ 3) && col == 0;
+                        (row == (_items.length - 1) ~/ 3) && col == 0;
                     final bool roundBottomRight =
-                        (row == (items.length - 1) ~/ 3) && col == 2;
+                        (row == (_items.length - 1) ~/ 3) && col == 2;
 
                     return ShoppingItemCard(
+                      key: ValueKey(item.productCode),
                       item: item,
                       onQuantityChanged: _handleQuantityChanged,
                       roundTopLeft: roundTopLeft,
