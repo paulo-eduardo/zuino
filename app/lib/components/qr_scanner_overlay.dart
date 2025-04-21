@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as Math;
 
-class QrScannerOverlay extends StatelessWidget {
+class QrScannerOverlay extends StatefulWidget {
   final bool isFlashOn;
   final VoidCallback onFlashToggle;
   final VoidCallback onClose;
@@ -14,6 +14,38 @@ class QrScannerOverlay extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<QrScannerOverlay> createState() => _QrScannerOverlayState();
+}
+
+class _QrScannerOverlayState extends State<QrScannerOverlay>
+    with TickerProviderStateMixin {
+  // Animation controller for the breathing effect
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Setup the animation controller for the breathing effect
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500), // Adjust speed as needed
+    )..repeat(reverse: true); // Automatically repeat and reverse
+
+    // Create a breathing animation that scales between 0.95 and 1.05
+    _animation = Tween<double>(begin: 0.95, end: 1.05).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     // Calculate a more appropriate size for the scanning area
     // Making it smaller and ensuring it's square
@@ -21,12 +53,26 @@ class QrScannerOverlay extends StatelessWidget {
 
     return Stack(
       children: [
-        // Scanning Area with Corner Brackets
+        // Scanning Area with Corner Brackets - with breathing animation
         Center(
-          child: Container(
-            width: scanSize,
-            height: scanSize,
-            child: CustomPaint(painter: CornerBracketsPainter()),
+          child: AnimatedBuilder(
+            animation: _animation,
+            builder: (context, child) {
+              return Transform.scale(
+                scale: _animation.value,
+                child: Container(
+                  width: scanSize,
+                  height: scanSize,
+                  child: CustomPaint(
+                    painter: CornerBracketsPainter(
+                      opacity:
+                          (_animation.value - 0.95) /
+                          0.1, // Normalize to 0-1 range
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ),
 
@@ -59,10 +105,10 @@ class QrScannerOverlay extends StatelessWidget {
           bottom: MediaQuery.of(context).size.height * 0.1,
           left: MediaQuery.of(context).size.width / 2 - 28,
           child: FloatingActionButton(
-            onPressed: onFlashToggle,
+            onPressed: widget.onFlashToggle,
             backgroundColor: Colors.white,
             child: Icon(
-              isFlashOn ? Icons.flashlight_off : Icons.flashlight_on,
+              widget.isFlashOn ? Icons.flashlight_off : Icons.flashlight_on,
               color: Colors.black,
               size: 30,
             ),
@@ -74,7 +120,7 @@ class QrScannerOverlay extends StatelessWidget {
           top: MediaQuery.of(context).padding.top + 10,
           left: 16,
           child: GestureDetector(
-            onTap: onClose,
+            onTap: widget.onClose,
             child: Container(
               padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
@@ -91,11 +137,17 @@ class QrScannerOverlay extends StatelessWidget {
 }
 
 class CornerBracketsPainter extends CustomPainter {
+  final double opacity;
+
+  CornerBracketsPainter({this.opacity = 1.0});
+
   @override
   void paint(Canvas canvas, Size size) {
     final Paint paint =
         Paint()
-          ..color = Colors.white
+          ..color = Colors.white.withOpacity(
+            0.7 + (opacity * 0.3),
+          ) // Vary opacity slightly
           ..style = PaintingStyle.stroke
           ..strokeWidth = 8.0
           ..strokeCap =
@@ -163,7 +215,7 @@ class CornerBracketsPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false;
+  bool shouldRepaint(covariant CornerBracketsPainter oldDelegate) {
+    return opacity != oldDelegate.opacity;
   }
 }
