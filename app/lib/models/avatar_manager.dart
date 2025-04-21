@@ -205,7 +205,6 @@ class AvatarManager extends ChangeNotifier {
   Future<void> _uploadAvatarInBackground(File file) async {
     try {
       await _storageService.uploadAvatar(file);
-      _logger.info('Avatar uploaded to Firebase Storage successfully');
       _showToast('Avatar uploaded successfully', true);
     } catch (e) {
       _logger.error('Error uploading avatar to Firebase Storage', e);

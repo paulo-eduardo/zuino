@@ -35,7 +35,6 @@ class ReceiptsDatabase {
 
       // Save receipt using URL as the key
       await box.put(url, receiptData);
-      _logger.info('Receipt saved successfully for URL: $url');
     } catch (e) {
       _logger.error('Error saving receipt: $e');
       rethrow;
@@ -102,7 +101,6 @@ class ReceiptsDatabase {
     try {
       final box = await _openBox();
       await box.delete(url);
-      _logger.info('Receipt with URL deleted successfully');
     } catch (e) {
       _logger.error('Error deleting receipt: $e');
       rethrow;
@@ -186,7 +184,6 @@ class ReceiptsDatabase {
     try {
       final box = await _openBox();
       await box.clear();
-      _logger.info('Cleared all receipts from database');
     } catch (e, stackTrace) {
       _logger.error('Error clearing receipts database', e, stackTrace);
       rethrow;

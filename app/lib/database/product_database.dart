@@ -13,7 +13,6 @@ class ProductDatabase {
     try {
       final box = await Hive.openBox(_boxName);
       await box.put(product.code, product.toMap());
-      _logger.info('Saved product: ${product.name} (${product.code})');
     } catch (e) {
       _logger.error('Error saving product: $e');
       throw Exception('Failed to save product: $e');
@@ -25,7 +24,6 @@ class ProductDatabase {
     try {
       final box = await Hive.openBox(_boxName);
       await box.delete(code);
-      _logger.info('Deleted product: $code');
     } catch (e) {
       _logger.error('Error deleting product: $e');
       throw Exception('Failed to delete product: $e');
@@ -46,7 +44,6 @@ class ProductDatabase {
 
       // Perform batch operation
       await box.putAll(batch);
-      _logger.info('Batch saved ${products.length} products');
     } catch (e) {
       _logger.error('Error in batch save: $e');
       throw Exception('Failed to save products in batch: $e');
@@ -60,11 +57,9 @@ class ProductDatabase {
       final data = box.get(code);
 
       if (data == null) {
-        _logger.info('Product not found in database: $code');
         return null;
       }
 
-      _logger.info('Retrieved product from database: $code');
       return Product.fromMap(Map<String, dynamic>.from(data));
     } catch (e) {
       _logger.error('Error getting product: $e');
@@ -90,7 +85,6 @@ class ProductDatabase {
       result.sort(
         (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
       );
-      _logger.info('Retrieved ${result.length} products sorted by name');
       return result;
     } catch (e) {
       _logger.error('Error getting all products: $e');
@@ -103,27 +97,16 @@ class ProductDatabase {
     double total = 0.0;
 
     try {
-      _logger.info('Calculating total price for ${items.length} items');
-
       for (final item in items) {
-        _logger.info(
-          'Processing item: ${item.productCode}, quantity: ${item.quantity}',
-        );
-
         final product = await getProduct(item.productCode);
 
         if (product != null) {
-          _logger.info(
-            'Found product: ${product.name}, price: ${product.lastUnitPrice}',
-          );
           total += product.lastUnitPrice * item.quantity;
-          _logger.info('Running total: $total');
         } else {
           _logger.warning('Product not found for code: ${item.productCode}');
         }
       }
 
-      _logger.info('Final calculated total price: $total');
       return total;
     } catch (e) {
       _logger.error('Error calculating total price', e);
@@ -136,7 +119,6 @@ class ProductDatabase {
     try {
       final box = await Hive.openBox(_boxName);
       await box.clear();
-      _logger.info('Cleared all products from database');
     } catch (e, stackTrace) {
       _logger.error('Error clearing products database', e, stackTrace);
       rethrow;
@@ -151,6 +133,35 @@ class ProductDatabase {
     } catch (e) {
       _logger.error('Error getting shopping list listenable', e);
       rethrow; // Using rethrow instead of throw e
+    }
+  }
+
+  /// Gets products filtered by name
+  /// Returns a list of products whose names contain the given search string
+  Future<List<Product>> getProductsByName(String searchString) async {
+    try {
+      // First get all products
+      final allProducts = await getAllProducts();
+
+      // If search string is empty, return all products
+      if (searchString.trim().isEmpty) {
+        return allProducts;
+      }
+
+      // Filter products by name (case-insensitive)
+      final normalizedSearch = searchString.toLowerCase().trim();
+      final filteredProducts =
+          allProducts
+              .where(
+                (product) =>
+                    product.name.toLowerCase().contains(normalizedSearch),
+              )
+              .toList();
+
+      return filteredProducts;
+    } catch (e) {
+      _logger.error('Error filtering products by name: $e');
+      throw Exception('Failed to filter products by name: $e');
     }
   }
 }

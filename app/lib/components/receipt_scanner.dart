@@ -65,8 +65,6 @@ class ReceiptScanner {
 
       if (result != null) {
         final url = result.toString();
-        _logger.info('QR Code scanned: $url');
-
         // Process the URL and save data
         await _processReceiptUrl(url);
       } else {

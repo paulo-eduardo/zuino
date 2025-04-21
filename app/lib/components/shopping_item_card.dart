@@ -70,7 +70,6 @@ class _ShoppingItemCardState extends State<ShoppingItemCard> {
 
   Future<void> _increaseQuantity() async {
     try {
-      _logger.info('Increasing quantity for: ${widget.item.productCode}');
       await _shoppingListDb.incrementQuantity(widget.item.productCode, 1.0);
 
       if (widget.onQuantityChanged != null) {
@@ -89,8 +88,6 @@ class _ShoppingItemCardState extends State<ShoppingItemCard> {
 
   Future<void> _decreaseQuantity() async {
     try {
-      _logger.info('Decreasing quantity for: ${widget.item.productCode}');
-
       // If quantity is 1, this will remove the item as implemented in the incrementQuantity method
       // with a negative value
       await _shoppingListDb.incrementQuantity(widget.item.productCode, -1.0);

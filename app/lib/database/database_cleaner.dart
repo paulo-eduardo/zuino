@@ -41,15 +41,11 @@ class DatabaseCleaner {
       );
 
       if (shouldClear == true) {
-        _logger.info('Starting to clear all product and receipt data');
-
         // Clear products
         await _productDb.clearAll();
 
         // Clear receipts
         await _receiptDb.clearAll();
-
-        _logger.info('Successfully cleared all product and receipt data');
 
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

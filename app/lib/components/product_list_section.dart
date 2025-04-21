@@ -26,13 +26,11 @@ class _ProductListSectionState extends State<ProductListSection> {
   @override
   void initState() {
     super.initState();
-    _logger.info('ProductListSection initialized');
     _setupListenable();
   }
 
   Future<void> _setupListenable() async {
     try {
-      _logger.info('Setting up products listenable');
       setState(() {
         _isLoading = true;
         _errorMessage = null;
@@ -46,7 +44,6 @@ class _ProductListSectionState extends State<ProductListSection> {
           _productsListenable = listenable;
           _isLoading = false;
         });
-        _logger.info('Products listenable set up successfully');
       }
     } catch (e, stackTrace) {
       _logger.error('Error setting up products listenable', e, stackTrace);
@@ -68,7 +65,6 @@ class _ProductListSectionState extends State<ProductListSection> {
   Future<List<Product>> _loadProducts() async {
     try {
       final products = await _productDb.getAllProducts();
-      _logger.info('Products loaded successfully. Count: ${products.length}');
       return products;
     } catch (e, stackTrace) {
       _logger.error('Error loading products', e, stackTrace);
@@ -77,7 +73,6 @@ class _ProductListSectionState extends State<ProductListSection> {
   }
 
   void _toggleEditMode() {
-    _logger.info('Toggling edit mode from $_isEditMode to ${!_isEditMode}');
     setState(() {
       _isEditMode = !_isEditMode;
     });
@@ -136,9 +131,9 @@ class _ProductListSectionState extends State<ProductListSection> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
+                      const Text(
                         'Produtos',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -219,7 +214,6 @@ class _ProductListSectionState extends State<ProductListSection> {
 
   @override
   void dispose() {
-    _logger.info('ProductListSection disposed');
     super.dispose();
   }
 }

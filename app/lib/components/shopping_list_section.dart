@@ -28,17 +28,12 @@ class _ShoppingListSectionState extends State<ShoppingListSection> {
   @override
   void initState() {
     super.initState();
-    _logger.info('ShoppingListSection initialized');
     _loadShoppingList();
   }
 
   Future<void> _loadShoppingList() async {
     try {
-      _logger.info('Loading shopping list');
       _shoppingListBox = await Hive.openBox('shopping_list');
-      _logger.info(
-        'Shopping list box opened, keys: ${_shoppingListBox.keys.length}',
-      );
 
       // Add a listener to the box to update the total amount when it changes
       _shoppingListBox.listenable().addListener(_calculateTotalAmount);
@@ -71,8 +66,6 @@ class _ShoppingListSectionState extends State<ShoppingListSection> {
 
   // Handle item quantity changes
   void _handleQuantityChanged() {
-    _logger.info('Item quantity changed');
-
     // Recalculate the total amount when an item changes
     _calculateTotalAmount();
 
@@ -91,7 +84,6 @@ class _ShoppingListSectionState extends State<ShoppingListSection> {
           _totalAmount = total;
         });
       }
-      _logger.info('Updated total amount: $_totalAmount');
     } catch (e) {
       _logger.error('Error calculating total amount', e);
     }
@@ -99,10 +91,6 @@ class _ShoppingListSectionState extends State<ShoppingListSection> {
 
   @override
   Widget build(BuildContext context) {
-    _logger.info(
-      'Building ShoppingListSection, isLoading: $_isLoading, hasError: $_hasError',
-    );
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -173,15 +161,8 @@ class _ShoppingListSectionState extends State<ShoppingListSection> {
           ValueListenableBuilder(
             valueListenable: _shoppingListBox.listenable(),
             builder: (context, box, _) {
-              _logger.info(
-                'ValueListenableBuilder rebuilding, box keys: ${box.keys.length}',
-              );
-
               final List<ShoppingItem> items = [];
               for (var key in box.keys) {
-                _logger.info(
-                  'Processing item with key: $key, value type: ${box.get(key).runtimeType}',
-                );
                 final data = box.get(key);
                 if (data != null) {
                   try {
@@ -194,8 +175,6 @@ class _ShoppingListSectionState extends State<ShoppingListSection> {
                   }
                 }
               }
-
-              _logger.info('Processed ${items.length} shopping items');
 
               if (items.isEmpty) {
                 return const Padding(
@@ -223,17 +202,20 @@ class _ShoppingListSectionState extends State<ShoppingListSection> {
                   itemCount: items.length,
                   itemBuilder: (context, index) {
                     final item = items[index];
-                    
+
                     // Calculate position in grid
-                    final int row = index ~/ 3; // Integer division by 3 (crossAxisCount)
-                    final int col = index % 3;  // Remainder when divided by 3
-                    
+                    final int row =
+                        index ~/ 3; // Integer division by 3 (crossAxisCount)
+                    final int col = index % 3; // Remainder when divided by 3
+
                     // Determine which corners should be rounded
                     final bool roundTopLeft = row == 0 && col == 0;
                     final bool roundTopRight = row == 0 && col == 2;
-                    final bool roundBottomLeft = (row == (items.length - 1) ~/ 3) && col == 0;
-                    final bool roundBottomRight = (row == (items.length - 1) ~/ 3) && col == 2;
-                    
+                    final bool roundBottomLeft =
+                        (row == (items.length - 1) ~/ 3) && col == 0;
+                    final bool roundBottomRight =
+                        (row == (items.length - 1) ~/ 3) && col == 2;
+
                     return ShoppingItemCard(
                       item: item,
                       onQuantityChanged: _handleQuantityChanged,

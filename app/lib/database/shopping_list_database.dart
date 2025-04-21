@@ -25,10 +25,6 @@ class ShoppingListDatabase {
       final box = await Hive.openBox(_boxName);
       final items = <ShoppingItem>[];
 
-      _logger.info(
-        'Getting all shopping list items, box keys: ${box.keys.toList()}',
-      );
-
       for (final key in box.keys) {
         final data = box.get(key);
         if (data != null) {
@@ -40,9 +36,6 @@ class ShoppingListDatabase {
                 Map<String, dynamic>.from(data),
               );
               items.add(item);
-              _logger.info(
-                'Retrieved shopping item: ${item.productCode}, quantity: ${item.quantity}',
-              );
             } else {
               // If it's not a Map, create a simple item with the key as the product code
               final item = ShoppingItem(
@@ -50,9 +43,6 @@ class ShoppingListDatabase {
                 quantity: 1.0,
               );
               items.add(item);
-              _logger.info(
-                'Retrieved legacy shopping item: ${item.productCode}',
-              );
 
               // Optionally, update the item in the database to the new format
               await box.put(key, item.toMap());
@@ -71,7 +61,6 @@ class ShoppingListDatabase {
                 quantity: 1.0,
               );
               items.add(item);
-              _logger.info('Recovered shopping item: ${item.productCode}');
 
               // Update the item in the database to the new format
               await box.put(key, item.toMap());
@@ -81,12 +70,9 @@ class ShoppingListDatabase {
               );
             }
           }
-        } else {
-          _logger.info('Null data found for key: $key');
         }
       }
 
-      _logger.info('Retrieved ${items.length} shopping list items');
       return items;
     } catch (e, stackTrace) {
       _logger.error('Error getting all items', e, stackTrace);
@@ -98,9 +84,6 @@ class ShoppingListDatabase {
   Future<void> addOrUpdateItem(ShoppingItem item) async {
     try {
       final box = await Hive.openBox(_boxName);
-      _logger.info(
-        'Adding/updating item in shopping list: ${item.productCode}',
-      );
       await box.put(item.productCode, item.toMap());
     } catch (e) {
       _logger.error('Error adding/updating item: ${item.productCode}', e);
@@ -129,7 +112,6 @@ class ShoppingListDatabase {
     try {
       final box = await Hive.openBox(_boxName);
       await box.delete(productCode);
-      _logger.info('Removed item $productCode from shopping list');
     } catch (e) {
       _logger.error('Error removing item: $productCode', e);
       rethrow;
@@ -146,7 +128,6 @@ class ShoppingListDatabase {
         final updatedItem = Map<String, dynamic>.from(item);
         updatedItem['quantity'] = quantity;
         await box.put(productCode, updatedItem);
-        _logger.info('Updated quantity for item $productCode to $quantity');
       } else {
         throw Exception('Item not found in shopping list');
       }
@@ -174,9 +155,6 @@ class ShoppingListDatabase {
           final updatedItem = Map<String, dynamic>.from(item);
           updatedItem['quantity'] = newQuantity;
           await box.put(productCode, updatedItem);
-          _logger.info(
-            'Updated quantity for item $productCode to $newQuantity',
-          );
         }
       } else {
         throw Exception('Item not found in shopping list');
@@ -192,7 +170,6 @@ class ShoppingListDatabase {
     try {
       final box = await Hive.openBox(_boxName);
       await box.clear();
-      _logger.info('Cleared all shopping list items');
     } catch (e) {
       _logger.error('Error clearing shopping list', e);
       rethrow;

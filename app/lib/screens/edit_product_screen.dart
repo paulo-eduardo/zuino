@@ -45,11 +45,9 @@ class _EditProductScreenState extends State<EditProductScreen> {
         _isLoading = true;
       });
 
-      _logger.info('Loading product data for code: ${widget.codigo}');
       final product = await _productDb.getProduct(widget.codigo);
 
       if (product != null) {
-        _logger.info('Product found: $product');
         setState(() {
           _currentProduct = product;
           _nameController.text = product.name;
@@ -113,10 +111,6 @@ class _EditProductScreenState extends State<EditProductScreen> {
     });
 
     try {
-      _logger.info(
-        'Starting to save product changes for code: ${widget.codigo}',
-      );
-
       if (_currentProduct == null) {
         throw Exception('Product not found in database');
       }
@@ -125,10 +119,6 @@ class _EditProductScreenState extends State<EditProductScreen> {
       final updatedProduct = _currentProduct!.copyWith(
         name: _nameController.text,
         category: _categoryController.text,
-      );
-
-      _logger.info(
-        'Updating product with new values: ${updatedProduct.toString()}',
       );
 
       // Save the updated product

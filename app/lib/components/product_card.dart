@@ -33,20 +33,16 @@ class ProductCard extends StatelessWidget {
 
   Future<void> _addToShoppingList() async {
     try {
-      _logger.info('Adding product to shopping list: $code');
-
       // Check if the item already exists in the shopping list
       final exists = await _shoppingListDb.itemExists(code);
 
       if (exists) {
         // If it exists, increment the quantity
         await _shoppingListDb.incrementQuantity(code, 1.0);
-        _logger.info('Incremented quantity for existing item: $code');
       } else {
         // If it doesn't exist, add it with quantity 1
         final item = ShoppingItem(productCode: code, quantity: 1.0);
         await _shoppingListDb.addOrUpdateItem(item);
-        _logger.info('Added new item to shopping list: $code');
       }
     } catch (e) {
       _logger.error('Error adding product to shopping list: $e');
@@ -62,21 +58,14 @@ class ProductCard extends StatelessWidget {
   }
 
   Future<void> _navigateToEditScreen(BuildContext context) async {
-    _logger.info('Navigating to edit screen for product: $name ($code)');
-
-    final result = await Navigator.push(
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder:
-            (context) => EditProductScreen(
-              codigo: code,
-              onProductUpdated: () {
-                _logger.info('Product updated callback received');
-              },
-            ),
+            (context) =>
+                EditProductScreen(codigo: code, onProductUpdated: () {}),
       ),
     );
-    _logger.info('Returned from edit screen with result: $result');
   }
 
   @override
