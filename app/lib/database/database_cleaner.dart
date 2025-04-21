@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:zuino/database/product_database.dart';
 import 'package:zuino/database/receipts_database.dart';
 import 'package:zuino/utils/logger.dart';
+import 'package:zuino/utils/toast_manager.dart'; // Add this import
 
 class DatabaseCleaner {
   final ProductDatabase _productDb;
@@ -47,21 +48,13 @@ class DatabaseCleaner {
         // Clear receipts
         await _receiptDb.clearAll();
 
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Produtos e recibos limpos com sucesso'),
-            ),
-          );
-        }
+        // No need for success toast as the UI change is clearly visible
+        // The product and receipt lists will be empty, which is obvious feedback to the user
       }
     } catch (e, stackTrace) {
       _logger.error('Error clearing product and receipt data', e, stackTrace);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao limpar dados: ${e.toString()}')),
-        );
-      }
+      // Show error toast using ToastManager
+      ToastManager.showError('Erro ao limpar dados: ${e.toString()}');
     }
   }
 }

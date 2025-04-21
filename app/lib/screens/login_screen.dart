@@ -4,6 +4,7 @@ import 'package:zuino/screens/signup_screen.dart'; // Import the signup screen
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:zuino/screens/shopping_screen.dart'; // Ensure correct StockScreen import
 import 'package:zuino/models/app_user_info.dart'; // Update import
+import 'package:zuino/utils/toast_manager.dart'; // Add this import
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -62,12 +63,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _showErrorToast(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message, style: const TextStyle(color: Colors.white)),
-        backgroundColor: Colors.red,
-      ),
-    );
+    // Use ToastManager instead of ScaffoldMessenger
+    ToastManager.showError(message);
   }
 
   @override

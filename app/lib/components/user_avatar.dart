@@ -1,10 +1,10 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:zuino/models/avatar_manager.dart';
 import 'package:zuino/screens/edit_user_screen.dart';
 import 'package:zuino/screens/login_screen.dart';
 import 'package:zuino/utils/logger.dart';
+import 'package:zuino/utils/toast_manager.dart'; // Add this import
 
 class UserAvatar extends StatefulWidget {
   final double radius;
@@ -98,7 +98,7 @@ class _UserAvatarState extends State<UserAvatar> {
       child: CircularProgressIndicator(
         strokeWidth: 2,
         valueColor: AlwaysStoppedAnimation<Color>(
-          Colors.white.withOpacity(0.5),
+          Colors.white.withAlpha(128), // Using withAlpha instead of withOpacity
         ),
       ),
     );
@@ -206,11 +206,8 @@ class _UserAvatarState extends State<UserAvatar> {
       );
     } catch (e) {
       _logger.error('Error during logout', e);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao sair: ${e.toString()}')),
-        );
-      }
+      // Use ToastManager instead of ScaffoldMessenger
+      ToastManager.showError('Erro ao sair: ${e.toString()}');
     }
   }
 }

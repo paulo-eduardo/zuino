@@ -6,6 +6,7 @@ import 'package:zuino/components/product_card.dart';
 import 'package:zuino/database/product_database.dart';
 import 'package:zuino/models/product.dart';
 import 'package:zuino/utils/logger.dart';
+import 'package:zuino/utils/toast_manager.dart'; // Add this import
 
 class ProductListSection extends StatefulWidget {
   const ProductListSection({super.key});
@@ -53,10 +54,8 @@ class _ProductListSectionState extends State<ProductListSection> {
               'Erro ao configurar atualização de produtos: ${e.toString()}';
         });
 
-        // Show a snackbar with the error
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(_errorMessage!)));
+        // Use ToastManager instead of ScaffoldMessenger
+        ToastManager.showError(_errorMessage!);
       }
     }
   }
@@ -79,6 +78,9 @@ class _ProductListSectionState extends State<ProductListSection> {
           _isLoading = false;
           _errorMessage = 'Erro ao carregar produtos: ${e.toString()}';
         });
+
+        // Show error toast
+        ToastManager.showError(_errorMessage!);
       }
     }
   }

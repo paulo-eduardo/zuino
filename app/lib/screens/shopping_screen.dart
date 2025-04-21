@@ -10,6 +10,7 @@ import 'package:zuino/database/receipts_database.dart';
 import 'package:zuino/database/shopping_list_database.dart';
 import 'package:zuino/screens/analytics_screen.dart';
 import 'package:zuino/utils/logger.dart';
+import 'package:zuino/utils/toast_manager.dart'; // Add this import
 
 class ShoppingScreen extends StatefulWidget {
   final bool showHeader;
@@ -223,18 +224,12 @@ class _ShoppingScreenState extends State<ShoppingScreen> {
 
       _refreshShoppingList();
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Lista de compras limpa com sucesso')),
-        );
-      }
+      // No need for success toast as the UI change is clearly visible
+      // The shopping list will be empty, which is obvious feedback to the user
     } catch (e) {
       _logger.error('Error clearing shopping list', e);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao limpar lista: ${e.toString()}')),
-        );
-      }
+      // Show error toast using ToastManager
+      ToastManager.showError('Erro ao limpar lista: ${e.toString()}');
     }
   }
 }

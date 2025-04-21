@@ -1,10 +1,10 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:zuino/utils/logger.dart';
+import 'package:zuino/utils/toast_manager.dart'; // Add this import
 import 'package:zuino/components/base_item_card.dart';
 import 'package:zuino/database/shopping_list_database.dart';
 import 'package:zuino/models/shopping_item.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:zuino/screens/edit_product_screen.dart';
 
 class ProductCard extends StatelessWidget {
@@ -46,14 +46,7 @@ class ProductCard extends StatelessWidget {
       }
     } catch (e) {
       _logger.error('Error adding product to shopping list: $e');
-
-      // Show an error toast
-      Fluttertoast.showToast(
-        msg: "Error adding to shopping list",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.red,
-      );
+      ToastManager.showError("Error adding to shopping list");
     }
   }
 

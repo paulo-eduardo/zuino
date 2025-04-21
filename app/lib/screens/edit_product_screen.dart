@@ -3,6 +3,7 @@ import 'package:zuino/database/product_database.dart';
 import 'package:zuino/database/categories_database.dart';
 import 'package:zuino/models/product.dart';
 import 'package:zuino/utils/logger.dart';
+import 'package:zuino/utils/toast_manager.dart'; // Add this import
 
 class EditProductScreen extends StatefulWidget {
   final String codigo;
@@ -57,18 +58,14 @@ class _EditProductScreenState extends State<EditProductScreen> {
       } else {
         _logger.error('Product not found with code: ${widget.codigo}');
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Produto não encontrado')),
-          );
+          ToastManager.showError('Produto não encontrado');
           Navigator.pop(context);
         }
       }
     } catch (e, stackTrace) {
       _logger.error('Error loading product data', e, stackTrace);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao carregar dados: ${e.toString()}')),
-        );
+        ToastManager.showError('Erro ao carregar dados: ${e.toString()}');
         setState(() {
           _isLoading = false;
         });
@@ -100,9 +97,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
   Future<void> _saveChanges() async {
     if (_nameController.text.isEmpty) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nome do produto não pode estar vazio')),
-      );
+      ToastManager.showError('Nome do produto não pode estar vazio');
       return;
     }
 
@@ -131,9 +126,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
 
       if (mounted) {
         // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Produto atualizado com sucesso')),
-        );
+        ToastManager.showSuccess('Produto atualizado com sucesso');
 
         // Reset the changes flag
         setState(() {
@@ -159,9 +152,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
     } catch (e) {
       _logger.error('Error saving product changes', e);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao salvar alterações: ${e.toString()}')),
-        );
+        ToastManager.showError('Erro ao salvar alterações: ${e.toString()}');
         setState(() {
           _isSaving = false;
         });

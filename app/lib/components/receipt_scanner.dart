@@ -7,6 +7,7 @@ import 'package:zuino/database/shopping_list_database.dart';
 import 'package:zuino/models/product.dart';
 import 'package:zuino/utils/logger.dart';
 import 'package:zuino/services/api_servive.dart';
+import 'package:zuino/utils/toast_manager.dart'; // Add this import
 
 class ReceiptScanner {
   final BuildContext context;
@@ -60,11 +61,17 @@ class ReceiptScanner {
         MaterialPageRoute(builder: (context) => QRCodeReader()),
       );
 
-      // Store context mounted state before async operations
-      final bool wasContextMounted = context.mounted;
-
       if (result != null) {
         final url = result.toString();
+
+        // Close QR code dialog
+        closeDialog();
+
+        // Show processing toast
+        if (context.mounted) {
+          ToastManager.showProcessing('Processando recibo...', context);
+        }
+
         // Process the URL and save data
         await _processReceiptUrl(url);
       } else {
@@ -73,18 +80,11 @@ class ReceiptScanner {
         return;
       }
 
-      // Close dialog when done
+      // Close dialog if still open
       closeDialog();
 
       // Call the callback to refresh the UI
       onScanComplete();
-
-      // Show success message only if context is still mounted
-      if (wasContextMounted && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Compra registrada com sucesso!')),
-        );
-      }
     } catch (e) {
       _logger.error('Error scanning receipt: $e');
 
@@ -93,41 +93,13 @@ class ReceiptScanner {
         Navigator.of(context, rootNavigator: true).pop();
       }
 
-      // Check if context is still mounted before showing error message
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao processar compra: ${e.toString()}')),
-        );
-      }
+      // Show error message
+      ToastManager.showError('Erro ao processar compra: ${e.toString()}');
     }
   }
 
   Future<void> _processReceiptUrl(String url) async {
     if (!context.mounted) return;
-
-    // Show a loading indicator
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-    scaffoldMessenger.showSnackBar(
-      const SnackBar(
-        content: Row(
-          children: [
-            SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-            ),
-            SizedBox(width: 12),
-            Text('Processando recibo...'),
-          ],
-        ),
-        duration: Duration(
-          seconds: 30,
-        ), // Long duration, we'll dismiss it manually
-      ),
-    );
 
     try {
       // First check if receipt already exists in database
@@ -136,15 +108,17 @@ class ReceiptScanner {
       if (!context.mounted) return;
 
       if (hasReceipt) {
-        // Hide the loading indicator
-        scaffoldMessenger.hideCurrentSnackBar();
-
-        // Show error message
-        _showToast(
+        // Show warning message
+        ToastManager.showWarning(
           'Este recibo já foi processado anteriormente.',
-          Colors.orange,
         );
         return;
+      }
+
+      // Update processing message
+      if (context.mounted) {
+        ToastManager.cancelProcessing();
+        ToastManager.showProcessing('Obtendo dados do recibo...', context);
       }
 
       // Make API request using ApiService
@@ -155,6 +129,15 @@ class ReceiptScanner {
       // Extract receipt data
       final receiptData = responseData['receipt'];
       final items = responseData['items'] as List;
+
+      // Update processing message
+      if (context.mounted) {
+        ToastManager.cancelProcessing();
+        ToastManager.showProcessing(
+          'Salvando ${items.length} itens...',
+          context,
+        );
+      }
 
       // Format items for both databases in a single loop
       final List<Map<String, dynamic>> productItems = [];
@@ -192,32 +175,6 @@ class ReceiptScanner {
         }
       }
 
-      // Update snackbar to show we're saving data
-      if (context.mounted) {
-        scaffoldMessenger.hideCurrentSnackBar();
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                ),
-                SizedBox(width: 12),
-                Text('Salvando dados...'),
-              ],
-            ),
-            duration: Duration(
-              seconds: 30,
-            ), // Long duration, we'll dismiss it manually
-          ),
-        );
-      }
-
       // Parse date from string to DateTime
       final receiptDate = DateTime.parse(receiptData['date']);
 
@@ -249,25 +206,21 @@ class ReceiptScanner {
 
       if (!context.mounted) return;
 
-      // Hide the loading indicator
-      scaffoldMessenger.hideCurrentSnackBar();
+      // Cancel the processing toast
+      ToastManager.cancelProcessing();
 
-      // Show a simple toast notification of success
-      _showToast(
+      // Show a success notification
+      ToastManager.showSuccess(
         'Recibo processado com sucesso. ${items.length} itens adicionados.',
-        Colors.green,
       );
     } catch (e) {
       if (!context.mounted) return;
 
-      // Hide the loading indicator
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      // Cancel the processing toast
+      ToastManager.cancelProcessing();
 
       // Show error message with details
-      _showToast(
-        'Erro: Falha ao processar recibo. ${e.toString()}',
-        Colors.red,
-      );
+      ToastManager.showError('Falha ao processar recibo: ${e.toString()}');
 
       // Rethrow to be caught by the parent method
       throw Exception('Failed to process receipt: $e');
@@ -283,16 +236,5 @@ class ReceiptScanner {
       return double.tryParse(value.replaceAll(',', '.')) ?? 0.0;
     }
     return 0.0;
-  }
-
-  // Helper method to show toast messages
-  void _showToast(String message, Color backgroundColor) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: backgroundColor,
-        duration: const Duration(seconds: 3),
-      ),
-    );
   }
 }

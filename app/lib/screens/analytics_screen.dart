@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:zuino/database/product_database.dart';
 import 'package:zuino/database/receipts_database.dart';
 import 'package:zuino/utils/logger.dart';
+import 'package:zuino/utils/toast_manager.dart'; // Add this import
 import 'package:fl_chart/fl_chart.dart'; // You'll need to add this package to pubspec.yaml
 import 'package:zuino/models/product.dart';
 
@@ -133,9 +134,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
         setState(() {
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao carregar dados: ${e.toString()}')),
-        );
+        ToastManager.showError('Erro ao carregar dados: ${e.toString()}');
       }
     }
   }
