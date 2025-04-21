@@ -1,4 +1,5 @@
-import 'package:hive/hive.dart';
+import 'package:flutter/foundation.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:zuino/utils/logger.dart';
 import 'package:zuino/models/product.dart';
 import 'package:zuino/models/shopping_item.dart';
@@ -71,7 +72,7 @@ class ProductDatabase {
     }
   }
 
-  /// Gets all products
+  /// Gets all products sorted by name
   Future<List<Product>> getAllProducts() async {
     try {
       final box = await Hive.openBox(_boxName);
@@ -86,7 +87,10 @@ class ProductDatabase {
       }
 
       // Sort by name for consistent display
-      result.sort((a, b) => a.name.compareTo(b.name));
+      result.sort(
+        (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+      );
+      _logger.info('Retrieved ${result.length} products sorted by name');
       return result;
     } catch (e) {
       _logger.error('Error getting all products: $e');
@@ -136,6 +140,17 @@ class ProductDatabase {
     } catch (e, stackTrace) {
       _logger.error('Error clearing products database', e, stackTrace);
       rethrow;
+    }
+  }
+
+  Future<ValueListenable<Box<dynamic>>> getListenable() async {
+    try {
+      // Make sure the box is open before getting the listenable
+      final box = await Hive.openBox(_boxName);
+      return box.listenable();
+    } catch (e) {
+      _logger.error('Error getting shopping list listenable', e);
+      rethrow; // Using rethrow instead of throw e
     }
   }
 }

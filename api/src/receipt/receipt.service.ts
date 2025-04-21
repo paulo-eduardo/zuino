@@ -1,7 +1,7 @@
 import axios from "axios";
 import * as cheerio from "cheerio";
 import { ReceiptItem, Receipt, Store } from "./receipt.interfaces";
-import { getCategoryForProduct } from "../db/category.db";
+import { aiProductFormat } from "../services/ai.service";
 
 export async function getReceiptDetails(
   url: string,
@@ -34,7 +34,9 @@ export async function getReceiptDetails(
   // Extract receipt items
   const items = extractReceiptItems($, $("#tabResult tr"));
 
-  return { receipt, items };
+  const aiFormatedProducts = await aiProductFormat(items);
+
+  return { receipt, items: aiFormatedProducts };
 }
 
 function extractStoreInfo(
@@ -165,7 +167,6 @@ function extractReceiptItems(
       const unitValue = cleanNumber(unitValueText);
       const quantity = cleanNumber(quantityText);
       const total = cleanNumber(totalText);
-      const category = getCategoryForProduct(name);
 
       if (receiptItemsMap[codigo]) {
         const currentQuantity = receiptItemsMap[codigo].quantity;
@@ -180,7 +181,6 @@ function extractReceiptItems(
           unit,
           unitValue,
           total,
-          category,
         };
       }
     }

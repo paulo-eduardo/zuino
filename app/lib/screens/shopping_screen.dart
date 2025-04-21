@@ -43,12 +43,6 @@ class _ShoppingScreenState extends State<ShoppingScreen> {
     scanner.scanReceipt();
   }
 
-  // Method to add a new item manually
-  void _addNewItem() {
-    // Your existing code to add a new item
-    // This might open a dialog or navigate to another screen
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -60,39 +54,26 @@ class _ShoppingScreenState extends State<ShoppingScreen> {
                 child: Container(
                   color: const Color(0xFF1E1E1E),
                   child: SafeArea(
-                    child: FutureBuilder<int>(
-                      future: _shoppingListDb.getItemCount(),
-                      builder: (context, snapshot) {
-                        final itemCount = snapshot.data ?? 0;
-                        final subtitle =
-                            itemCount > 0
-                                ? '$itemCount ${itemCount == 1 ? 'item' : 'itens'} na lista'
-                                : 'Sua lista está vazia';
-
-                        return PageHeader(
-                          title: "Lista de Compras",
-                          subtitle: subtitle,
-                          showBackButton: false,
-                          showAvatar: true,
-                          actionButton: IconButton(
-                            icon: const Icon(
-                              Icons.analytics,
-                              color: Colors.blue,
-                              size: 26.0,
+                    child: PageHeader(
+                      showBackButton: false,
+                      showAvatar: true,
+                      actionButton: IconButton(
+                        icon: const Icon(
+                          Icons.analytics,
+                          color: Colors.blue,
+                          size: 26.0,
+                        ),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AnalyticsScreen(),
                             ),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const AnalyticsScreen(),
-                                ),
-                              );
-                            },
-                            tooltip: 'Análise de gastos',
-                          ),
-                          onAvatarChanged: () => setState(() {}),
-                        );
-                      },
+                          );
+                        },
+                        tooltip: 'Análise de gastos',
+                      ),
+                      onAvatarChanged: () => setState(() {}),
                     ),
                   ),
                 ),

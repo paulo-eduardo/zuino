@@ -35,6 +35,7 @@ class _ShoppingItemCardState extends State<ShoppingItemCard> {
   final _shoppingListDb = ShoppingListDatabase();
   Product? _productDetails;
   bool _isLoading = true;
+  bool _showQuantityControls = false;
 
   @override
   void initState() {
@@ -59,6 +60,12 @@ class _ShoppingItemCardState extends State<ShoppingItemCard> {
         });
       }
     }
+  }
+
+  void _toggleQuantityControls() {
+    setState(() {
+      _showQuantityControls = !_showQuantityControls;
+    });
   }
 
   Future<void> _increaseQuantity() async {
@@ -115,57 +122,121 @@ class _ShoppingItemCardState extends State<ShoppingItemCard> {
     final name = _productDetails?.name;
     final category = _productDetails?.category;
 
-    // Custom overlay to show quantity
+    // Custom overlay to show quantity and controls
     Widget quantityOverlay = Positioned(
       right: 0,
       top: 0,
-      child: ClipRRect(
-        // Only round the top-right corner if the card has a rounded top-right corner
-        borderRadius: BorderRadius.only(
-          topRight:
-              widget.roundTopRight ? const Radius.circular(8) : Radius.zero,
-        ),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(6, 6, 6, 6), // Smaller padding
-          decoration: BoxDecoration(
-            color: Colors.blue.withAlpha(204),
-            borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(10), // Slightly smaller radius
-            ),
-          ),
-          constraints: const BoxConstraints(
-            minWidth: 20,
-            minHeight: 20,
-          ), // Smaller constraints
-          alignment: Alignment.center,
-          child: Text(
-            '${widget.item.quantity}',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize:
-                  widget.item.quantity >= 10
-                      ? 12
-                      : 14, // Smaller font for double digits
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
+      child:
+          _showQuantityControls
+              ? _buildQuantityControls()
+              : _buildQuantityBadge(),
     );
 
     return GestureDetector(
+      onTap: _toggleQuantityControls,
       onLongPress: _decreaseQuantity,
       child: BaseItemCard(
         name: name,
         category: category,
         isLoading: _isLoading,
         overlay: quantityOverlay,
-        onTap: _increaseQuantity,
+        onTap: null, // We're handling tap in the GestureDetector
         fixedSize: true,
         roundTopLeft: widget.roundTopLeft,
         roundTopRight: widget.roundTopRight,
         roundBottomLeft: widget.roundBottomLeft,
         roundBottomRight: widget.roundBottomRight,
+      ),
+    );
+  }
+
+  Widget _buildQuantityBadge() {
+    return ClipRRect(
+      // Only round the top-right corner if the card has a rounded top-right corner
+      borderRadius: BorderRadius.only(
+        topRight: widget.roundTopRight ? const Radius.circular(8) : Radius.zero,
+      ),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(6, 6, 6, 6), // Smaller padding
+        decoration: BoxDecoration(
+          color: Colors.blue.withAlpha(204),
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(10), // Slightly smaller radius
+          ),
+        ),
+        constraints: const BoxConstraints(
+          minWidth: 20,
+          minHeight: 20,
+        ), // Smaller constraints
+        alignment: Alignment.center,
+        child: Text(
+          '${widget.item.quantity}',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize:
+                widget.item.quantity >= 10
+                    ? 12
+                    : 14, // Smaller font for double digits
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuantityControls() {
+    return Container(
+      width: 100,
+      height: 40,
+      decoration: BoxDecoration(
+        color: Colors.blue.withAlpha(230),
+        borderRadius: BorderRadius.only(
+          topRight:
+              widget.roundTopRight ? const Radius.circular(8) : Radius.zero,
+          bottomLeft: const Radius.circular(10),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          // Minus button
+          InkWell(
+            onTap: _decreaseQuantity,
+            child: Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.3),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.remove, color: Colors.white, size: 18),
+            ),
+          ),
+
+          // Quantity display
+          Text(
+            '${widget.item.quantity}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          // Plus button
+          InkWell(
+            onTap: _increaseQuantity,
+            child: Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.3),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.add, color: Colors.white, size: 18),
+            ),
+          ),
+        ],
       ),
     );
   }

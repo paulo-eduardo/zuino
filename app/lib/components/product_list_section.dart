@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:zuino/components/product_card.dart';
 import 'package:zuino/database/product_database.dart';
 import 'package:zuino/models/product.dart';
-import 'package:zuino/screens/edit_product_screen.dart';
 import 'package:zuino/utils/logger.dart';
 
 class ProductListSection extends StatefulWidget {
@@ -19,70 +21,58 @@ class _ProductListSectionState extends State<ProductListSection> {
   bool _isLoading = true;
   bool _isEditMode = false;
   String? _errorMessage;
+  ValueListenable<Box>? _productsListenable;
 
   @override
   void initState() {
     super.initState();
     _logger.info('ProductListSection initialized');
-    _loadProducts();
+    _setupListenable();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _logger.info('ProductListSection dependencies changed');
-  }
-
-  @override
-  void didUpdateWidget(ProductListSection oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _logger.info('ProductListSection widget updated');
-  }
-
-  Future<void> _loadProducts() async {
-    _logger.info('Starting to load products');
+  Future<void> _setupListenable() async {
     try {
+      _logger.info('Setting up products listenable');
       setState(() {
         _isLoading = true;
         _errorMessage = null;
       });
-      _logger.info('Set loading state to true');
 
-      final products = await _productDb.getAllProducts();
-      _logger.info('Products loaded successfully. Count: ${products.length}');
-
-      if (products.isNotEmpty) {
-        _logger.info(
-          'First product: ${products.first.name}, Code: ${products.first.code}',
-        );
-      }
+      // Get the listenable from the database
+      final listenable = await _productDb.getListenable();
 
       if (mounted) {
         setState(() {
-          _products = products;
+          _productsListenable = listenable;
           _isLoading = false;
         });
-        _logger.info('State updated with products');
-      } else {
-        _logger.warning('Widget not mounted after loading products');
+        _logger.info('Products listenable set up successfully');
       }
     } catch (e, stackTrace) {
-      _logger.error('Error loading products', e, stackTrace);
+      _logger.error('Error setting up products listenable', e, stackTrace);
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorMessage = 'Erro ao carregar produtos: ${e.toString()}';
+          _errorMessage =
+              'Erro ao configurar atualização de produtos: ${e.toString()}';
         });
-        _logger.info('Set error state: $_errorMessage');
 
         // Show a snackbar with the error
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(_errorMessage!)));
-        _logger.info('Displayed error snackbar');
-      } else {
-        _logger.warning('Widget not mounted after error');
       }
+    }
+  }
+
+  Future<List<Product>> _loadProducts() async {
+    try {
+      final products = await _productDb.getAllProducts();
+      _logger.info('Products loaded successfully. Count: ${products.length}');
+      return products;
+    } catch (e, stackTrace) {
+      _logger.error('Error loading products', e, stackTrace);
+      rethrow; // Using rethrow instead of throw e
     }
   }
 
@@ -108,87 +98,122 @@ class _ProductListSectionState extends State<ProductListSection> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Section header with edit toggle
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Produtos',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+    // Use ValueListenableBuilder to rebuild when the products box changes
+    return ValueListenableBuilder(
+      valueListenable: _productsListenable!,
+      builder: (context, box, _) {
+        return FutureBuilder<List<Product>>(
+          future: _loadProducts(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (snapshot.hasError) {
+              return Center(
+                child: Text(
+                  'Error: ${snapshot.error}',
+                  style: const TextStyle(color: Colors.red),
                 ),
-              ),
-              if (true)
-                IconButton(
-                  icon: Icon(
-                    _isEditMode ? Icons.check : Icons.edit,
-                    color: Colors.blue,
-                  ),
-                  onPressed: _toggleEditMode,
-                ),
-            ],
-          ),
-        ),
-
-        // Product grid
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              childAspectRatio: 1.0,
-              crossAxisSpacing: 0,
-              mainAxisSpacing: 0,
-            ),
-            itemCount: _products.length,
-            itemBuilder: (context, index) {
-              final product = _products[index];
-
-              // Calculate position in grid
-              final int row =
-                  index ~/ 3; // Integer division by 3 (crossAxisCount)
-              final int col = index % 3; // Remainder when divided by 3
-
-              // Determine which corners should be rounded
-              final bool roundTopLeft = row == 0 && col == 0;
-              final bool roundTopRight = row == 0 && col == 2;
-
-              // Check if this is the last row
-              final bool isLastRow = row == (_products.length - 1) ~/ 3;
-
-              // For the last row, we need to check if it's a full row
-              final bool isFullLastRow = _products.length % 3 == 0;
-
-              // Adjust bottom corners for partial last rows
-              final bool adjustedRoundBottomLeft = isLastRow && col == 0;
-              final bool adjustedRoundBottomRight =
-                  isLastRow &&
-                  (isFullLastRow
-                      ? col == 2
-                      : col == (_products.length % 3) - 1);
-
-              return ProductCard(
-                code: product.code,
-                name: product.name,
-                category: product.category,
-                isEditMode: _isEditMode,
-                roundTopLeft: roundTopLeft,
-                roundTopRight: roundTopRight,
-                roundBottomLeft: adjustedRoundBottomLeft,
-                roundBottomRight: adjustedRoundBottomRight,
               );
-            },
-          ),
-        ),
-      ],
+            }
+
+            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Center(child: Text('No products found'));
+            }
+
+            _products = snapshot.data!;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Section header with edit toggle
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 8.0,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Produtos',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (true)
+                        IconButton(
+                          icon: Icon(
+                            _isEditMode ? Icons.check : Icons.edit,
+                            color: Colors.blue,
+                          ),
+                          onPressed: _toggleEditMode,
+                        ),
+                    ],
+                  ),
+                ),
+
+                // Product grid
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          childAspectRatio: 1.0,
+                          crossAxisSpacing: 0,
+                          mainAxisSpacing: 0,
+                        ),
+                    itemCount: _products.length,
+                    itemBuilder: (context, index) {
+                      final product = _products[index];
+
+                      // Calculate position in grid
+                      final int row =
+                          index ~/ 3; // Integer division by 3 (crossAxisCount)
+                      final int col = index % 3; // Remainder when divided by 3
+
+                      // Determine which corners should be rounded
+                      final bool roundTopLeft = row == 0 && col == 0;
+                      final bool roundTopRight = row == 0 && col == 2;
+
+                      // Check if this is the last row
+                      final bool isLastRow = row == (_products.length - 1) ~/ 3;
+
+                      // For the last row, we need to check if it's a full row
+                      final bool isFullLastRow = _products.length % 3 == 0;
+
+                      // Adjust bottom corners for partial last rows
+                      final bool adjustedRoundBottomLeft =
+                          isLastRow && col == 0;
+                      final bool adjustedRoundBottomRight =
+                          isLastRow &&
+                          (isFullLastRow
+                              ? col == 2
+                              : col == (_products.length % 3) - 1);
+
+                      return ProductCard(
+                        code: product.code,
+                        name: product.name,
+                        category: product.category,
+                        isEditMode: _isEditMode,
+                        roundTopLeft: roundTopLeft,
+                        roundTopRight: roundTopRight,
+                        roundBottomLeft: adjustedRoundBottomLeft,
+                        roundBottomRight: adjustedRoundBottomRight,
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 

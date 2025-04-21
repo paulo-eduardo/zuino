@@ -22,5 +22,5 @@ export interface ReceiptItem {
   unit: string;
   unitValue: number;
   total: number;
-  category: string | undefined;
+  category?: string | undefined;
 }

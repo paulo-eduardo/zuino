@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import * as receiptService from "./receipt.service.ts";
+import * as receiptService from "./receipt.service";
 
 export async function getReceiptItems(req: Request, res: Response) {
   const { url } = req.body;
