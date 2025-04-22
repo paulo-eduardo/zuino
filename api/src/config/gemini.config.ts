@@ -188,20 +188,23 @@ ${categoriesString}
 **Instruções Detalhadas para Padronização do Nome:**
 1.  **Mantenha a Essência:** Preserve a informação principal do produto e a marca principal.
 2.  **Remova Medidas:** Exclua unidades, pesos, volumes (ex: 1kg, 500G, 1L, 250ML, 6 UNIDADES).
-3.  **Remova Embalagens Genéricas:** Exclua termos como PCT, CX, LATA, PET, EMBALAGEM, GARRAFA, SACO, POTE, VIDRO, KIT (a menos que 'KIT' seja parte essencial do nome).
+3.  **Remova Embalagens Genéricas:** Exclua termos como PCT, CX, LATA, PET, EMBALAGEM, GARRAFA, SACO, POTE, VIDRO, KIT (a menos que 'KIT' seja parte essencial do nome, nesse caso, mantenha 'Kit').
 4.  **Remova Nomes de Loja/Rede:** Exclua nomes genéricos de supermercados (ex: COOPER, SUPERPAN, CARREFOUR).
-5.  **Remova Qualidade Genérica:** Exclua termos como TIPO 1, TRADICIONAL, ESPECIAL, PREMIUM, SELECIONADO, se não forem um diferencial chave do produto.
-6.  **Mantenha Descritores Chave:** Preserve palavras importantes que definem o produto (ex: INTEGRAL, PARBOILIZADO, DIET, ZERO, LIGHT, MORANGO, CHOCOLATE, FRANGO ASSADO).
-7.  **Expanda Abreviações Comuns:** Converta abreviações óbvias para a palavra completa (ex: COND -> CONDICIONADOR, SHAMP -> SHAMPOO, DET -> DETERGENTE, MAC -> MACARRAO, REF -> REFRIGERANTE, CERV -> CERVEJA). Mantenha siglas consagradas (ex: UHT, NCM).
-8.  **Use o Contexto (Inclusive Marcas):** Ao encontrar termos ambíguos ou abreviações não óbvias, use o contexto do nome, especialmente a marca, para deduzir o significado correto. **Exemplo:** "AZ MAMMA MIA 500ML" deve ser padronizado como "AZEITE MAMMA MIA", pois "MAMMA MIA" é uma marca conhecida de azeite, e não de azeitona. Não invente informações, mas use o contexto para desambiguar.
-9.  **Formato Final:** Mantenha o resultado em LETRAS MAIÚSCULAS.
+5.  **Remova Qualidade Genérica:** Exclua termos como TIPO 1, TRADICIONAL, ESPECIAL, PREMIUM, SELECIONADO, se não forem um diferencial chave e específico do produto (ex: Mantenha em "Café Tradicional", mas remova de "Arroz Tradicional").
+6.  **Mantenha Descritores Chave:** Preserve palavras importantes que definem o produto (ex: INTEGRAL, PARBOILIZADO, DIET, ZERO, LIGHT, MORANGO, CHOCOLATE, FRANGO ASSADO). Mantenha a acentuação original destas palavras.
+7.  **Expanda Abreviações Comuns:** Converta abreviações óbvias para a palavra completa (ex: COND -> Condicionador, SHAMP -> Shampoo, DET -> Detergente, MAC -> Macarrão, REF -> Refrigerante, CERV -> Cerveja). Mantenha siglas consagradas (ex: UHT, NCM). A palavra expandida deve seguir a regra de capitalização final.
+8.  **Use o Contexto (Inclusive Marcas):** Ao encontrar termos ambíguos ou abreviações não óbvias, use o contexto do nome, especialmente a marca, para deduzir o significado correto. **Exemplo:** "AZ MAMMA MIA 500ML" deve ser padronizado como "Azeite Mamma Mia", pois "MAMMA MIA" é uma marca conhecida de azeite. Não invente informações, mas use o contexto para desambiguar. Preserve a capitalização original da marca, se reconhecível.
+9.  **Formato Final e Capitalização:**
+    * **Preserve Acentos:** Mantenha os acentos (como á, ç, õ, ê) presentes nas palavras relevantes do nome original.
+    * **Capitalização "Proper Case":** Formate o nome capitalizando a primeira letra de palavras significativas (substantivos, adjetivos, verbos, marcas). Mantenha artigos (o, a, os, as), preposições (de, do, da, em, para, com) e conjunções (e) em minúsculas, a menos que iniciem o nome ou façam parte de um nome de marca que os utilize em maiúsculas (ex: Leite Moça). Se a marca for reconhecida e usar um padrão específico (ex: NESTLÉ, Sadia), tente replicar esse padrão. A primeira palavra do nome deve sempre ser capitalizada.
 
 **Exemplo Completo de Processamento:**
 *Entrada Exemplo:*
 \`\`\`json
 [
   {"codigo": "11301", "name": "KIT SHAMPOO ELSEVE 375ML+COND 170ML CACHO DO SONHO"},
-  {"codigo": "9988", "name": "HAMBURGUER BOVINO SADIA CX 672G C/12 UN"}
+  {"codigo": "9988", "name": "HAMBURGUER BOVINO SADIA CX 672G C/12 UN"},
+  {"codigo": "1234", "name": "ACUCAR CRISTAL DOCUCAR PCT 5KG"}
 ]
 \`\`\`
 *Saída Exemplo:*
@@ -211,13 +214,19 @@ ${categoriesString}
     "codigo": "11301",
     "original_name": "KIT SHAMPOO ELSEVE 375ML+COND 170ML CACHO DO SONHO",
     "category": "Limpeza e Higiene",
-    "standardized_name": "KIT SHAMPOO ELSEVE + CONDICIONADOR CACHO DO SONHO"
+    "standardized_name": "Kit Shampoo Elseve + Condicionador Cacho do Sonho"
   },
   {
     "codigo": "9988",
     "original_name": "HAMBURGUER BOVINO SADIA CX 672G C/12 UN",
     "category": "Essenciais",
-    "standardized_name": "HAMBURGUER BOVINO SADIA"
+    "standardized_name": "Hambúrguer Bovino Sadia"
+  },
+  {
+      "codigo": "1234",
+      "original_name": "ACUCAR CRISTAL DOCUCAR PCT 5KG",
+      "category": "Essenciais",
+      "standardized_name": "Açúcar Cristal Doçúcar"
   }
 ]
 \`\`\`
@@ -226,7 +235,7 @@ ${categoriesString}
 A entrada do usuário conterá APENAS a lista de produtos a serem processados no formato JSON string, dentro de um bloco de código.
 
 **Sua Resposta:**
-Retorne **APENAS E SOMENTE** um array JSON válido contendo um objeto para CADA produto da entrada. Cada objeto deve ter as chaves: "codigo", "original_name", "category" (com uma das 6 categorias válidas ou "Outros"), e "standardized_name". Não inclua nenhuma outra explicação ou texto fora do JSON.
+Retorne **APENAS E SOMENTE** um array JSON válido contendo um objeto para CADA produto da entrada. Cada objeto deve ter as chaves: "codigo", "original_name", "category" (com uma das 6 categorias válidas ou "Outros"), e "standardized_name". Não inclua nenhuma outra explicação ou texto fora do JSON.;
 `;
 }
 
