@@ -3,6 +3,7 @@ import 'package:zuino/models/product.dart';
 import 'package:zuino/models/shopping_item.dart';
 import 'package:zuino/database/product_database.dart';
 import 'package:zuino/database/shopping_list_database.dart';
+import 'package:zuino/screens/edit_product_screen.dart';
 import 'package:zuino/utils/logger.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'base_item_card.dart';
@@ -60,6 +61,16 @@ class _ShoppingItemCardState extends State<ShoppingItemCard> {
         });
       }
     }
+  }
+
+  Future<void> _navigateToEditScreen(BuildContext context) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => EditProductScreen(codigo: widget.item.productCode),
+      ),
+    );
   }
 
   void _toggleQuantityControls() {
@@ -131,7 +142,7 @@ class _ShoppingItemCardState extends State<ShoppingItemCard> {
 
     return GestureDetector(
       onTap: _toggleQuantityControls,
-      onLongPress: _decreaseQuantity,
+      onLongPress: () => _navigateToEditScreen(context),
       child: BaseItemCard(
         name: name,
         category: category,

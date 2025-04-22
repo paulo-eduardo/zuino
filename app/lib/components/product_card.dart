@@ -60,11 +60,7 @@ class ProductCard extends StatelessWidget {
   Future<void> _navigateToEditScreen(BuildContext context) async {
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder:
-            (context) =>
-                EditProductScreen(codigo: code, onProductUpdated: () {}),
-      ),
+      MaterialPageRoute(builder: (context) => EditProductScreen(codigo: code)),
     );
   }
 
@@ -102,6 +98,7 @@ class ProductCard extends StatelessWidget {
     }
 
     return GestureDetector(
+      onLongPress: () => _navigateToEditScreen(context),
       onTap:
           isEditMode
               ? () => _navigateToEditScreen(context)
