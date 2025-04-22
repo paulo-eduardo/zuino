@@ -5,8 +5,8 @@ class ShoppingInputBar extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onMenuPressed;
   final FocusNode? focusNode;
-  final String hintText;
   final GlobalKey? menuButtonKey;
+  final String hintText;
 
   const ShoppingInputBar({
     Key? key,
@@ -14,59 +14,67 @@ class ShoppingInputBar extends StatelessWidget {
     required this.onTap,
     required this.onMenuPressed,
     this.focusNode,
-    this.hintText = "Buscar ou adicionar item...",
     this.menuButtonKey,
+    this.hintText = "Eu quero comprar...",
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 5,
-            offset: const Offset(0, -2),
+    return Stack(
+      children: [
+        // Base input bar
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1E1E),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 5,
+                offset: const Offset(0, -2),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Search input field
-          Expanded(
-            child: GestureDetector(
-              onTap: onTap,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 12.0,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2A2A2A),
-                  borderRadius: BorderRadius.circular(25.0),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.search, color: Colors.grey),
-                    const SizedBox(width: 8.0),
-                    Text(hintText, style: const TextStyle(color: Colors.grey)),
-                  ],
+          child: Row(
+            children: [
+              // Search input field
+              Expanded(
+                child: GestureDetector(
+                  onTap: onTap,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 12.0,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2A2A2A),
+                      borderRadius: BorderRadius.circular(25.0),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.search, color: Colors.grey),
+                        const SizedBox(width: 8.0),
+                        Text(
+                          hintText,
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
 
-          // Menu button (now on the right)
-          IconButton(
-            key: menuButtonKey,
-            icon: const Icon(Icons.menu, color: Colors.white),
-            onPressed: onMenuPressed,
-            tooltip: 'Menu options',
+              // Menu button (now on the right)
+              IconButton(
+                key: menuButtonKey,
+                icon: const Icon(Icons.menu, color: Colors.white),
+                onPressed: onMenuPressed,
+                tooltip: 'Menu options',
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
+import 'package:zuino/utils/logger.dart';
 import 'dart:io';
 import 'qr_scanner_overlay.dart';
 
 class QRCodeReader extends StatefulWidget {
+  const QRCodeReader({super.key});
+
   @override
-  State<StatefulWidget> createState() => _QRCodeReaderState();
+  State<QRCodeReader> createState() => _QRCodeReaderState();
 }
 
 class _QRCodeReaderState extends State<QRCodeReader>
     with SingleTickerProviderStateMixin {
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
   QRViewController? controller;
-  bool isScanning = true;
   bool isFlashOn = false;
   bool hasDetectedCode = false;
-
-  // Animation controller for the scanning effect
+  final Logger _logger = Logger('QRCodeReader');
   late AnimationController _animationController;
-  late Animation<double> _animation;
 
   @override
   void initState() {
@@ -28,10 +28,6 @@ class _QRCodeReaderState extends State<QRCodeReader>
       duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat(reverse: true);
-
-    _animation = Tween<double>(begin: 0.6, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
   }
 
   @override
@@ -39,8 +35,9 @@ class _QRCodeReaderState extends State<QRCodeReader>
     super.reassemble();
     if (Platform.isAndroid) {
       controller!.pauseCamera();
+    } else if (Platform.isIOS) {
+      controller!.resumeCamera();
     }
-    controller!.resumeCamera();
   }
 
   @override
@@ -83,7 +80,7 @@ class _QRCodeReaderState extends State<QRCodeReader>
         if (!mounted) return;
 
         // Get position of the QR code if available
-        if (scanData.format != null) {
+        if (scanData.code != null) {
           setState(() {
             hasDetectedCode = true;
             _animationController.stop();
