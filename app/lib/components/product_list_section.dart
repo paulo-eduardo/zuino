@@ -171,20 +171,10 @@ class _ProductListSectionState extends State<ProductListSection> {
                   // Determine which corners should be rounded
                   final bool roundTopLeft = row == 0 && col == 0;
                   final bool roundTopRight = row == 0 && col == 2;
-
-                  // Check if this is the last row
-                  final bool isLastRow = row == (_products.length - 1) ~/ 3;
-
-                  // For the last row, we need to check if it's a full row
-                  final bool isFullLastRow = _products.length % 3 == 0;
-
-                  // Adjust bottom corners for partial last rows
-                  final bool adjustedRoundBottomLeft = isLastRow && col == 0;
-                  final bool adjustedRoundBottomRight =
-                      isLastRow &&
-                      (isFullLastRow
-                          ? col == 2
-                          : col == (_products.length % 3) - 1);
+                  final bool roundBottomLeft =
+                      (row == (_products.length - 1) ~/ 3) && col == 0;
+                  final bool roundBottomRight =
+                      (row == (_products.length - 1) ~/ 3) && col == 2;
 
                   return ProductCard(
                     key: ValueKey(product.code),
@@ -194,8 +184,8 @@ class _ProductListSectionState extends State<ProductListSection> {
                     isEditMode: _isEditMode,
                     roundTopLeft: roundTopLeft,
                     roundTopRight: roundTopRight,
-                    roundBottomLeft: adjustedRoundBottomLeft,
-                    roundBottomRight: adjustedRoundBottomRight,
+                    roundBottomLeft: roundBottomLeft,
+                    roundBottomRight: roundBottomRight,
                   );
                 },
               ),

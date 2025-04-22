@@ -16,6 +16,7 @@ class ProductCard extends StatelessWidget {
   final bool roundTopRight;
   final bool roundBottomLeft;
   final bool roundBottomRight;
+  final VoidCallback? onCardTap;
   final _logger = Logger('ProductCard');
   final _shoppingListDb = ShoppingListDatabase();
 
@@ -29,6 +30,7 @@ class ProductCard extends StatelessWidget {
     this.roundTopRight = true,
     this.roundBottomLeft = true,
     this.roundBottomRight = true,
+    this.onCardTap,
   });
 
   Future<void> _addToShoppingList() async {
@@ -43,6 +45,11 @@ class ProductCard extends StatelessWidget {
         // If it doesn't exist, add it with quantity 1
         final item = ShoppingItem(productCode: code, quantity: 1.0);
         await _shoppingListDb.addOrUpdateItem(item);
+      }
+
+      // Call the onCardTap callback if provided
+      if (onCardTap != null) {
+        onCardTap!();
       }
     } catch (e) {
       _logger.error('Error adding product to shopping list: $e');

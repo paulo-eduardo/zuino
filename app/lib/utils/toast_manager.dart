@@ -7,6 +7,8 @@ class ToastManager {
   static FToast? _fToast;
   static Widget? _currentProcessingToast;
 
+  // Default bottom offset to position toasts above bottom bars
+
   /// Shows a success toast notification
   ///
   /// [message] The message to display in the toast
@@ -17,7 +19,7 @@ class ToastManager {
     Fluttertoast.showToast(
       msg: message,
       toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.BOTTOM,
+      gravity: ToastGravity.TOP, // Use CENTER instead of BOTTOM
       timeInSecForIosWeb: 2,
       backgroundColor: Colors.green,
       textColor: Colors.white,
@@ -35,7 +37,7 @@ class ToastManager {
     Fluttertoast.showToast(
       msg: message,
       toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.BOTTOM,
+      gravity: ToastGravity.TOP, // Use CENTER instead of BOTTOM
       timeInSecForIosWeb: 2,
       backgroundColor: Colors.red,
       textColor: Colors.white,
@@ -53,7 +55,7 @@ class ToastManager {
     Fluttertoast.showToast(
       msg: message,
       toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.BOTTOM,
+      gravity: ToastGravity.TOP, // Use CENTER instead of BOTTOM
       timeInSecForIosWeb: 2,
       backgroundColor: Colors.orange,
       textColor: Colors.white,
@@ -97,13 +99,13 @@ class ToastManager {
       ),
     );
 
-    // Show the toast
+    // Show the toast in the center of the screen
     _fToast!.showToast(
       child: _currentProcessingToast!,
-      gravity: ToastGravity.BOTTOM,
+      gravity: ToastGravity.TOP, // Use CENTER instead of BOTTOM
       toastDuration: const Duration(
         days: 1,
-      ), // Effectively &quot;forever&quot; until canceled
+      ), // Effectively "forever" until canceled
     );
   }
 

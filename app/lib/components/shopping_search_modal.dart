@@ -1,0 +1,363 @@
+import 'package:flutter/material.dart';
+import 'package:zuino/database/product_database.dart';
+import 'package:zuino/models/product.dart';
+import 'package:zuino/components/product_card.dart';
+import 'package:zuino/utils/logger.dart';
+
+class ShoppingSearchModal extends StatefulWidget {
+  const ShoppingSearchModal({super.key});
+
+  @override
+  State<ShoppingSearchModal> createState() => _ShoppingSearchModalState();
+}
+
+class _ShoppingSearchModalState extends State<ShoppingSearchModal>
+    with SingleTickerProviderStateMixin {
+  final _searchController = TextEditingController();
+  final _focusNode = FocusNode();
+  final _productDb = ProductDatabase();
+  final _logger = Logger('ShoppingSearchModal');
+
+  bool _isSearching = false;
+  List<Product> _filteredProducts = [];
+  bool _isLoading = false;
+
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+
+  // Minimum height for the modal to display content
+  final double _minModalHeight = 200.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(_onSearchChanged);
+
+    // Initialize animation controller
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    // Initialize animation with a smoother curve
+    _animation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutQuart, // Smoother curve for better expansion feel
+    );
+
+    // Start animation
+    _animationController.forward();
+
+    // Request focus to show keyboard automatically
+    Future.delayed(const Duration(milliseconds: 100), () {
+      _focusNode.requestFocus();
+    });
+
+    // Remove the keyboard visibility listener that's causing navigation issues
+    // We'll handle closing manually with a back button or gesture
+
+    // Load initial products
+    _searchProducts();
+  }
+
+  void _onSearchChanged() {
+    final searchTerm = _searchController.text.trim();
+    setState(() {
+      _isSearching = searchTerm.isNotEmpty;
+    });
+
+    // Debounce search
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (searchTerm == _searchController.text.trim()) {
+        _searchProducts();
+      }
+    });
+  }
+
+  Future<void> _searchProducts() async {
+    final searchTerm = _searchController.text.trim();
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      if (searchTerm.isEmpty) {
+        // If search is empty, show an empty list instead of recent products
+        setState(() {
+          _filteredProducts = [];
+          _isLoading = false;
+        });
+      } else {
+        // Search for products matching the term
+        final products = await _productDb.getProductsByName(searchTerm);
+        setState(() {
+          _filteredProducts = products;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      _logger.error('Error searching products', e);
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _clearSearch() {
+    setState(() {
+      _searchController.clear();
+      _isSearching = false;
+    });
+    _searchProducts(); // This will now load recent products
+    _focusNode.requestFocus(); // Keep focus on the search field
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Get screen dimensions and keyboard height
+    final screenSize = MediaQuery.of(context).size;
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+
+    // Calculate the maximum height (80% of screen)
+    final maxModalHeight = (screenSize.height * 0.8) - keyboardHeight;
+
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        // Calculate the current animated height
+        final currentHeight = maxModalHeight * _animation.value;
+
+        // Determine if we should show content based on minimum height
+        final showContent = currentHeight >= _minModalHeight;
+
+        return Align(
+          alignment: Alignment.bottomCenter,
+          child: GestureDetector(
+            // Only handle vertical drags, not taps
+            onVerticalDragUpdate: (details) {
+              // Only allow downward drag (positive delta)
+              if (details.primaryDelta! > 0) {
+                // Calculate new animation value based on drag
+                final newValue =
+                    _animationController.value - (details.primaryDelta! / 500);
+                _animationController.value = newValue.clamp(0.0, 1.0);
+
+                // If dragged below 70%, close the modal immediately
+                if (_animationController.value < 0.7) {
+                  Navigator.of(context).pop();
+                }
+              }
+            },
+            child: Container(
+              height: currentHeight,
+              width: screenSize.width,
+              margin: EdgeInsets.only(bottom: keyboardHeight),
+              child: showContent ? child : const SizedBox.shrink(),
+            ),
+          ),
+        );
+      },
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFF1E1E1E),
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
+            ),
+          ),
+          // Use SafeArea to avoid system UI overlaps
+          child: SafeArea(
+            // Only apply bottom padding
+            top: false,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // Only show certain elements if we have enough height
+                final hasEnoughHeight = constraints.maxHeight >= 200;
+                final hasFullHeight = constraints.maxHeight >= 400;
+
+                return Column(
+                  children: [
+                    // Handle bar
+                    Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(top: 8, bottom: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[600],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+
+                    // Results title - only show if we have enough height
+                    if (hasEnoughHeight)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 8.0,
+                        ),
+                        child: Row(
+                          children: [
+                            Text(
+                              _searchController.text.trim().isEmpty
+                                  ? 'Digite para buscar produtos'
+                                  : 'Resultados da busca',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Spacer(),
+                            if (_isLoading)
+                              const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+
+                    // Results list - only show if we have full height
+                    if (hasFullHeight)
+                      Flexible(
+                        child:
+                            _filteredProducts.isEmpty
+                                ? Center(
+                                  child: Text(
+                                    _isLoading
+                                        ? 'Carregando...'
+                                        : _searchController.text.trim().isEmpty
+                                        ? 'Digite algo para buscar produtos'
+                                        : 'Nenhum produto encontrado',
+                                    style: TextStyle(color: Colors.grey[400]),
+                                  ),
+                                )
+                                : GridView.builder(
+                                  padding: const EdgeInsets.all(16),
+                                  // Ensure the GridView can scroll to the bottom
+                                  physics:
+                                      const AlwaysScrollableScrollPhysics(),
+                                  gridDelegate:
+                                      const SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 3, // 3 items per row
+                                        childAspectRatio:
+                                            1, // Square aspect ratio
+                                        crossAxisSpacing:
+                                            0, // No spacing horizontally
+                                        mainAxisSpacing:
+                                            0, // No spacing vertically
+                                      ),
+                                  itemCount: _filteredProducts.length,
+                                  itemBuilder: (context, index) {
+                                    final product = _filteredProducts[index];
+
+                                    // Calculate position in grid
+                                    final int row =
+                                        index ~/
+                                        3; // Integer division by 3 (crossAxisCount)
+                                    final int col =
+                                        index %
+                                        3; // Remainder when divided by 3
+
+                                    // Determine which corners should be rounded
+                                    final bool roundTopLeft =
+                                        row == 0 && col == 0;
+                                    final bool roundTopRight =
+                                        row == 0 && col == 2;
+                                    final bool roundBottomLeft =
+                                        (row ==
+                                            (_filteredProducts.length - 1) ~/
+                                                3) &&
+                                        col == 0;
+                                    final bool roundBottomRight =
+                                        (row ==
+                                            (_filteredProducts.length - 1) ~/
+                                                3) &&
+                                        col == 2;
+
+                                    return ProductCard(
+                                      key: ValueKey(product.code),
+                                      code: product.code,
+                                      name: product.name,
+                                      category: product.category,
+                                      roundTopLeft: roundTopLeft,
+                                      roundTopRight: roundTopRight,
+                                      roundBottomLeft: roundBottomLeft,
+                                      roundBottomRight: roundBottomRight,
+                                      onCardTap: () {
+                                        // Clear the search field and keep focus
+                                        _clearSearch();
+                                      },
+                                    );
+                                  },
+                                ),
+                      ),
+
+                    // Search bar at the bottom - always show
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: TextField(
+                        controller: _searchController,
+                        focusNode: _focusNode,
+                        style: const TextStyle(color: Colors.white),
+                        // Disable autocorrect and suggestions
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        keyboardType: TextInputType.text,
+                        textInputAction: TextInputAction.search,
+                        // Disable capitalization
+                        textCapitalization: TextCapitalization.none,
+                        decoration: InputDecoration(
+                          hintText: "Buscar produtos...",
+                          hintStyle: TextStyle(color: Colors.grey[400]),
+                          prefixIcon: const Icon(
+                            Icons.search,
+                            color: Colors.grey,
+                          ),
+                          suffixIcon:
+                              _isSearching
+                                  ? IconButton(
+                                    icon: const Icon(
+                                      Icons.clear,
+                                      color: Colors.grey,
+                                    ),
+                                    onPressed: _clearSearch,
+                                  )
+                                  : null,
+                          filled: true,
+                          fillColor: const Color(0xFF2A2A2A),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(30),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 0,
+                            horizontal: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    _focusNode.dispose();
+    _animationController.dispose();
+    super.dispose();
+  }
+}

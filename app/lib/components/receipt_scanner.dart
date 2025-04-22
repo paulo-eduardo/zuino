@@ -11,90 +11,40 @@ import 'package:zuino/utils/toast_manager.dart'; // Add this import
 
 class ReceiptScanner {
   final BuildContext context;
-  final VoidCallback onScanComplete;
   final Logger _logger = Logger('ReceiptScanner');
   final ProductDatabase _productDb = ProductDatabase();
   final ReceiptsDatabase _receiptDb = ReceiptsDatabase();
   final ShoppingListDatabase _shoppingListDb = ShoppingListDatabase();
 
-  ReceiptScanner({required this.context, required this.onScanComplete});
+  ReceiptScanner({required this.context});
 
   Future<void> scanReceipt() async {
-    bool dialogCompleted = false;
-    bool isDialogOpen = false;
+    String? qrResult;
 
     try {
-      // Show loading dialog
-      if (context.mounted) {
-        isDialogOpen = true;
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              content: Row(
-                children: const [
-                  CircularProgressIndicator(),
-                  SizedBox(width: 20),
-                  Text("Processando QR Code..."),
-                ],
-              ),
-            );
-          },
-        ).then((_) {
-          dialogCompleted = true;
-        });
-      }
-
-      // Function to close dialog
-      void closeDialog() {
-        if (isDialogOpen && context.mounted && !dialogCompleted) {
-          Navigator.of(context, rootNavigator: true).pop();
-          isDialogOpen = false;
-          dialogCompleted = true;
-        }
-      }
-
-      // Launch QR code scanner
-      final result = await Navigator.push(
+      // First launch QR code scanner
+      qrResult = await Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => QRCodeReader()),
       );
 
-      if (result != null) {
-        final url = result.toString();
-
-        // Close QR code dialog
-        closeDialog();
-
-        // Show processing toast
-        if (context.mounted) {
-          ToastManager.showProcessing('Processando recibo...', context);
-        }
-
-        // Process the URL and save data
-        await _processReceiptUrl(url);
-      } else {
-        // If no result, close the dialog
-        closeDialog();
+      // If no result (user cancelled), just return
+      if (qrResult == null || !context.mounted) {
         return;
       }
 
-      // Close dialog if still open
-      closeDialog();
+      // Show processing toast
+      ToastManager.showProcessing('Processando recibo...', context);
 
-      // Call the callback to refresh the UI
-      onScanComplete();
+      // Process the URL and save data
+      await _processReceiptUrl(qrResult);
     } catch (e) {
       _logger.error('Error scanning receipt: $e');
 
-      // Close dialog if it's still open
-      if (isDialogOpen && context.mounted && !dialogCompleted) {
-        Navigator.of(context, rootNavigator: true).pop();
-      }
-
       // Show error message
-      ToastManager.showError('Erro ao processar compra: ${e.toString()}');
+      if (context.mounted) {
+        ToastManager.showError('Erro ao processar compra: ${e.toString()}');
+      }
     }
   }
 
