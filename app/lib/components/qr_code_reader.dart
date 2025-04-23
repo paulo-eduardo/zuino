@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:qr_code_scanner/qr_code_scanner.dart';
-import 'package:zuino/utils/logger.dart';
-import 'dart:io';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'qr_scanner_overlay.dart';
 
 class QRCodeReader extends StatefulWidget {
@@ -14,11 +12,9 @@ class QRCodeReader extends StatefulWidget {
 
 class _QRCodeReaderState extends State<QRCodeReader>
     with SingleTickerProviderStateMixin {
-  final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
-  QRViewController? controller;
+  final MobileScannerController controller = MobileScannerController();
   bool isFlashOn = false;
   bool hasDetectedCode = false;
-  final Logger _logger = Logger('QRCodeReader');
   late AnimationController _animationController;
 
   @override
@@ -31,32 +27,15 @@ class _QRCodeReaderState extends State<QRCodeReader>
   }
 
   @override
-  void reassemble() {
-    super.reassemble();
-    if (Platform.isAndroid) {
-      controller!.pauseCamera();
-    } else if (Platform.isIOS) {
-      controller!.resumeCamera();
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
           // QR Scanner Camera View
-          QRView(
-            key: qrKey,
-            onQRViewCreated: _onQRViewCreated,
-            overlay: QrScannerOverlayShape(
-              borderColor: Colors.transparent,
-              borderRadius: 0,
-              borderLength: 0,
-              borderWidth: 0,
-              cutOutSize: 300,
-              overlayColor: Colors.transparent,
-            ),
+          MobileScanner(
+            controller: controller,
+            onDetect: _onDetect,
+            fit: BoxFit.cover,
           ),
 
           // Custom Overlay Widget
@@ -70,56 +49,43 @@ class _QRCodeReaderState extends State<QRCodeReader>
     );
   }
 
-  void _onQRViewCreated(QRViewController controller) {
-    setState(() {
-      this.controller = controller;
-    });
+  void _onDetect(BarcodeCapture capture) {
+    if (!mounted) return;
 
-    controller.scannedDataStream.listen(
-      (scanData) {
+    final List<Barcode> barcodes = capture.barcodes;
+
+    if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
+      final String code = barcodes.first.rawValue!;
+
+      setState(() {
+        hasDetectedCode = true;
+        _animationController.stop();
+      });
+
+      // Play success haptic feedback
+      HapticFeedback.mediumImpact();
+
+      // Return the scanned data after a short delay
+      Future.delayed(const Duration(seconds: 1), () {
         if (!mounted) return;
-
-        // Get position of the QR code if available
-        if (scanData.code != null) {
-          setState(() {
-            hasDetectedCode = true;
-            _animationController.stop();
-          });
-
-          // Play success haptic feedback if available
-          HapticFeedback.mediumImpact();
-
-          // Return the scanned data after a short delay
-          Future.delayed(const Duration(seconds: 1), () {
-            if (!mounted) return;
-            if (Navigator.canPop(context)) {
-              Navigator.pop(context, scanData.code);
-            }
-          });
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context, code);
         }
-      },
-      onError: (error) {
-        if (!mounted) return;
-        setState(() {
-          hasDetectedCode = false;
-        });
-      },
-    );
+      });
+    }
   }
 
   void _toggleFlash() {
-    if (controller != null) {
-      controller!.toggleFlash();
-      setState(() {
-        isFlashOn = !isFlashOn;
-      });
-    }
+    controller.toggleTorch();
+    setState(() {
+      isFlashOn = !isFlashOn;
+    });
   }
 
   @override
   void dispose() {
     _animationController.dispose();
-    controller?.dispose();
+    controller.dispose();
     super.dispose();
   }
 }
