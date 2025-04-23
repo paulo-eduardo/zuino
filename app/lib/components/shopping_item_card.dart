@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:zuino/models/product.dart';
 import 'package:zuino/models/shopping_item.dart';
 import 'package:zuino/database/product_database.dart';
@@ -37,11 +39,42 @@ class _ShoppingItemCardState extends State<ShoppingItemCard> {
   Product? _productDetails;
   bool _isLoading = true;
   bool _showQuantityControls = false;
+  ValueListenable<Box<dynamic>>? _productListenable;
 
   @override
   void initState() {
     super.initState();
-    _loadProductDetails();
+    _initializeProductListener();
+  }
+
+  Future<void> _initializeProductListener() async {
+    try {
+      // Initial load of product details
+      await _loadProductDetails();
+
+      // Set up the listenable for product changes
+      final listenable = await _productDb.getListenable();
+
+      if (mounted) {
+        setState(() {
+          _productListenable = listenable;
+        });
+
+        // Add listener to reload product details when the product database changes
+        _productListenable!.addListener(_handleProductChanges);
+      }
+    } catch (e) {
+      _logger.error('Error initializing product listener', e);
+    }
+  }
+
+  void _handleProductChanges() {
+    // Check if the specific product we're displaying has changed
+    final box = (_productListenable as ValueListenable<Box>).value;
+    if (box.containsKey(widget.item.productCode)) {
+      // Reload the product details
+      _loadProductDetails();
+    }
   }
 
   Future<void> _loadProductDetails() async {
@@ -63,14 +96,28 @@ class _ShoppingItemCardState extends State<ShoppingItemCard> {
     }
   }
 
+  @override
+  void dispose() {
+    // Remove the listener when the widget is disposed
+    if (_productListenable != null) {
+      _productListenable!.removeListener(_handleProductChanges);
+    }
+    super.dispose();
+  }
+
   Future<void> _navigateToEditScreen(BuildContext context) async {
-    await Navigator.push(
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder:
             (context) => EditProductScreen(codigo: widget.item.productCode),
       ),
     );
+
+    // If the product was updated, reload the details
+    if (result == true) {
+      _loadProductDetails();
+    }
   }
 
   void _toggleQuantityControls() {

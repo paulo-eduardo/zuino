@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:zuino/components/page_header.dart';
 import 'package:zuino/components/product_list_section.dart';
-import 'package:zuino/components/qr_code_reader.dart';
 import 'package:zuino/components/receipt_scanner.dart';
 import 'package:zuino/components/shopping_input_bar.dart';
 import 'package:zuino/components/shopping_list_section.dart';
@@ -10,7 +9,6 @@ import 'package:zuino/database/product_database.dart';
 import 'package:zuino/database/receipts_database.dart';
 import 'package:zuino/database/shopping_list_database.dart';
 import 'package:zuino/screens/analytics_screen.dart';
-import 'package:zuino/utils/logger.dart';
 import 'package:zuino/utils/toast_manager.dart';
 import '../components/shopping_speed_dial.dart';
 
@@ -26,8 +24,6 @@ class ShoppingScreen extends StatefulWidget {
 class _ShoppingScreenState extends State<ShoppingScreen> {
   final _shoppingListKey = GlobalKey<State<ShoppingListSection>>();
   final _productListKey = GlobalKey<State<ProductListSection>>();
-
-  final Logger _logger = Logger("ShoppingScreen");
 
   // Add these new variables for search functionality
   final TextEditingController _searchController = TextEditingController();

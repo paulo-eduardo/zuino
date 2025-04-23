@@ -95,9 +95,11 @@ class _EditProductScreenState extends State<EditProductScreen> {
   }
 
   Future<void> _saveChanges() async {
-    if (_nameController.text.isEmpty) {
+    if (_nameController.text.isEmpty || _categoryController.text.isEmpty) {
       if (!mounted) return;
-      ToastManager.showError('Nome do produto não pode estar vazio');
+      ToastManager.showError(
+        'Nome ou categoria do produto não podem estar vazio',
+      );
       return;
     }
 
@@ -106,6 +108,14 @@ class _EditProductScreenState extends State<EditProductScreen> {
     });
 
     try {
+      // Return to previous screen after a short delay
+      if (mounted) {
+        Navigator.pop(
+          context,
+          true,
+        ); // Return true to indicate changes were made
+      }
+
       if (_currentProduct == null) {
         throw Exception('Product not found in database');
       }
@@ -138,16 +148,6 @@ class _EditProductScreenState extends State<EditProductScreen> {
         if (widget.onProductUpdated != null) {
           widget.onProductUpdated!();
         }
-
-        // Return to previous screen after a short delay
-        Future.delayed(const Duration(seconds: 1), () {
-          if (mounted) {
-            Navigator.pop(
-              context,
-              true,
-            ); // Return true to indicate changes were made
-          }
-        });
       }
     } catch (e) {
       _logger.error('Error saving product changes', e);
@@ -241,7 +241,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
           Autocomplete<String>(
             optionsBuilder: (TextEditingValue textEditingValue) {
               if (textEditingValue.text.isEmpty) {
-                return const Iterable<String>.empty();
+                return _categories; // Show all categories when empty
               }
               return _categories.where(
                 (category) => category.toLowerCase().contains(
@@ -280,6 +280,10 @@ class _EditProductScreenState extends State<EditProductScreen> {
                 onChanged: (value) {
                   _categoryController.text = value;
                   _onFieldChanged();
+                },
+                onTap: () {
+                  // Clear the field when tapped
+                  controller.clear();
                 },
               );
             },

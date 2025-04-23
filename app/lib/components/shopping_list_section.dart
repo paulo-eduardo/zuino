@@ -94,7 +94,11 @@ class _ShoppingListSectionState extends State<ShoppingListSection> {
   @override
   void dispose() {
     // Remove the listener when the widget is disposed
-    _shoppingListListenable.removeListener(_loadShoppingList);
+    _shoppingListListenable.removeListener(() {
+      if (mounted) {
+        _loadShoppingList();
+      }
+    });
     super.dispose();
   }
 
