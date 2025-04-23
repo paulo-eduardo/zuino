@@ -44,6 +44,23 @@ class _QRCodeReaderState extends State<QRCodeReader>
             onFlashToggle: _toggleFlash,
             onClose: () => Navigator.pop(context),
           ),
+
+          // Test button with hardcoded QR code
+          Positioned(
+            bottom: 30,
+            right: 30,
+            child: FloatingActionButton(
+              backgroundColor: Colors.blue,
+              child: const Icon(Icons.code),
+              onPressed: () {
+                // Return the hardcoded QR code
+                Navigator.pop(
+                  context,
+                  "https://www.fazenda.pr.gov.br/nfce/qrcode?p=41250378119914000163650110000614801218655593%7C2%7C1%7C3%7C7B387592EDB47C7777D56760BD0F7E268B05A39A",
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
