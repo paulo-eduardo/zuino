@@ -7,7 +7,6 @@ import 'package:zuino/database/product_database.dart';
 import 'package:zuino/database/shopping_list_database.dart';
 import 'package:zuino/screens/edit_product_screen.dart';
 import 'package:zuino/utils/logger.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'base_item_card.dart';
 
 class ShoppingItemCard extends StatefulWidget {
@@ -133,12 +132,6 @@ class _ShoppingItemCardState extends State<ShoppingItemCard> {
       if (widget.onQuantityChanged != null) {
         widget.onQuantityChanged!();
       }
-
-      Fluttertoast.showToast(
-        msg: "Quantity increased",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-      );
     } catch (e) {
       _logger.error('Error increasing quantity: $e');
     }
@@ -152,20 +145,6 @@ class _ShoppingItemCardState extends State<ShoppingItemCard> {
 
       if (widget.onQuantityChanged != null) {
         widget.onQuantityChanged!();
-      }
-
-      if (widget.item.quantity > 1) {
-        Fluttertoast.showToast(
-          msg: "Quantity decreased",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-        );
-      } else {
-        Fluttertoast.showToast(
-          msg: "Item removed from shopping list",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-        );
       }
     } catch (e) {
       _logger.error('Error decreasing quantity: $e');
