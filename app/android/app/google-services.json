@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "657971354277",
+    "project_id": "pauloes-mercadinho",
+    "storage_bucket": "pauloes-mercadinho.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:657971354277:android:55d7a2b35a7a531255cb4c",
+        "android_client_info": {
+          "package_name": "com.pauloes.zuino"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAmwPEk8G0I6IKjDLI1lByp1pKIB27SFdI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
