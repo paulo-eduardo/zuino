@@ -126,7 +126,7 @@ class _ShoppingSearchModalState extends State<ShoppingSearchModal>
       final newProduct = Product(
         code: searchText,
         name: searchText,
-        category: 'Novo Produto', // Default category
+        category: 'Outros', // Default category
       );
 
       // Save the product to the database
@@ -147,12 +147,15 @@ class _ShoppingSearchModalState extends State<ShoppingSearchModal>
 
   @override
   Widget build(BuildContext context) {
-    // Get screen dimensions and keyboard height
+    // Get screen dimensions
     final screenSize = MediaQuery.of(context).size;
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
 
-    // Calculate the maximum height (80% of screen)
-    final maxModalHeight = (screenSize.height * 0.8) - keyboardHeight;
+    // Calculate the available height (screen height minus keyboard height)
+    final availableHeight = screenSize.height - keyboardHeight;
+
+    // Calculate the maximum height (80% of available height)
+    final maxModalHeight = availableHeight * 0.8;
 
     return AnimatedBuilder(
       animation: _animation,
@@ -163,29 +166,28 @@ class _ShoppingSearchModalState extends State<ShoppingSearchModal>
         // Determine if we should show content based on minimum height
         final showContent = currentHeight >= _minModalHeight;
 
-        return Align(
-          alignment: Alignment.bottomCenter,
-          child: GestureDetector(
-            // Only handle vertical drags, not taps
-            onVerticalDragUpdate: (details) {
-              // Only allow downward drag (positive delta)
-              if (details.primaryDelta! > 0) {
-                // Calculate new animation value based on drag
-                final newValue =
-                    _animationController.value - (details.primaryDelta! / 500);
-                _animationController.value = newValue.clamp(0.0, 1.0);
-
-                // If dragged below 70%, close the modal immediately
-                if (_animationController.value < 0.7) {
-                  Navigator.of(context).pop();
+        return Padding(
+          // Add padding at the bottom equal to keyboard height to push the modal up
+          padding: EdgeInsets.only(bottom: keyboardHeight),
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: GestureDetector(
+              onVerticalDragUpdate: (details) {
+                if (details.primaryDelta! > 0) {
+                  final newValue =
+                      _animationController.value -
+                      (details.primaryDelta! / 500);
+                  _animationController.value = newValue.clamp(0.0, 1.0);
+                  if (_animationController.value < 0.7) {
+                    Navigator.of(context).pop();
+                  }
                 }
-              }
-            },
-            child: Container(
-              height: currentHeight,
-              width: screenSize.width,
-              margin: EdgeInsets.only(bottom: keyboardHeight),
-              child: showContent ? child : const SizedBox.shrink(),
+              },
+              child: SizedBox(
+                height: currentHeight,
+                width: screenSize.width,
+                child: showContent ? child : const SizedBox.shrink(),
+              ),
             ),
           ),
         );
@@ -255,47 +257,16 @@ class _ShoppingSearchModalState extends State<ShoppingSearchModal>
                       ),
 
                     // Results list - only show if we have full height
+                    // Results list - only show if we have full height
                     if (hasFullHeight)
                       Flexible(
                         child:
-                            _filteredProducts.isEmpty &&
-                                    !_isLoading &&
-                                    _searchController.text.trim().isNotEmpty
-                                ? GridView.builder(
-                                  padding: const EdgeInsets.all(16),
-                                  physics:
-                                      const AlwaysScrollableScrollPhysics(),
-                                  gridDelegate:
-                                      const SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: 3,
-                                        childAspectRatio: 1,
-                                        crossAxisSpacing: 0,
-                                        mainAxisSpacing: 0,
-                                      ),
-                                  itemCount: 1, // Just one item
-                                  itemBuilder: (context, index) {
-                                    final searchText =
-                                        _searchController.text.trim();
-                                    return BaseItemCard(
-                                      name: searchText,
-                                      category: 'Novo produto',
-                                      roundTopLeft: true,
-                                      roundTopRight: true,
-                                      roundBottomLeft: true,
-                                      roundBottomRight: true,
-                                      fixedSize: true,
-                                      onTap: _handleNewProductCardTap,
-                                    );
-                                  },
-                                )
-                                : _filteredProducts.isEmpty
+                            _searchController.text.trim().isEmpty
                                 ? Center(
                                   child: Text(
                                     _isLoading
                                         ? 'Carregando...'
-                                        : _searchController.text.trim().isEmpty
-                                        ? 'Digite algo para buscar produtos'
-                                        : 'Nenhum produto encontrado',
+                                        : 'Digite algo para buscar produtos',
                                     style: TextStyle(color: Colors.grey[400]),
                                   ),
                                 )
@@ -310,13 +281,41 @@ class _ShoppingSearchModalState extends State<ShoppingSearchModal>
                                         crossAxisSpacing: 0,
                                         mainAxisSpacing: 0,
                                       ),
-                                  itemCount: _filteredProducts.length,
+                                  // Add +1 to always include the "New Product" card at the end
+                                  itemCount:
+                                      _isLoading
+                                          ? 0
+                                          : _filteredProducts.length + 1,
                                   itemBuilder: (context, index) {
+                                    // If we're at the last index, show the "New Product" card
+                                    if (index == _filteredProducts.length) {
+                                      final searchText =
+                                          _searchController.text.trim();
+                                      return BaseItemCard(
+                                        name: searchText,
+                                        category: 'Novo produto',
+                                        roundTopLeft: false,
+                                        roundTopRight: false,
+                                        roundBottomLeft:
+                                            _filteredProducts.length % 3 == 0,
+                                        roundBottomRight:
+                                            _filteredProducts.length % 3 == 2,
+                                        fixedSize: true,
+                                        onTap: _handleNewProductCardTap,
+                                      );
+                                    }
+
+                                    // Otherwise, show a product card
                                     final product = _filteredProducts[index];
 
                                     // Calculate position in grid
                                     final int row = index ~/ 3;
                                     final int col = index % 3;
+
+                                    // Total number of items including the "New Product" card
+                                    final totalItems =
+                                        _filteredProducts.length + 1;
+                                    final lastRow = (totalItems - 1) ~/ 3;
 
                                     // Determine which corners should be rounded
                                     final bool roundTopLeft =
@@ -324,15 +323,13 @@ class _ShoppingSearchModalState extends State<ShoppingSearchModal>
                                     final bool roundTopRight =
                                         row == 0 && col == 2;
                                     final bool roundBottomLeft =
-                                        (row ==
-                                            (_filteredProducts.length - 1) ~/
-                                                3) &&
-                                        col == 0;
+                                        row == lastRow &&
+                                        col == 0 &&
+                                        index == totalItems - 3;
                                     final bool roundBottomRight =
-                                        (row ==
-                                            (_filteredProducts.length - 1) ~/
-                                                3) &&
-                                        col == 2;
+                                        row == lastRow &&
+                                        col == 2 &&
+                                        index == totalItems - 2;
 
                                     return ProductCard(
                                       key: ValueKey(product.code),
@@ -351,7 +348,6 @@ class _ShoppingSearchModalState extends State<ShoppingSearchModal>
                                   },
                                 ),
                       ),
-
                     // Search bar at the bottom - always show
                     Padding(
                       padding: const EdgeInsets.all(16.0),
