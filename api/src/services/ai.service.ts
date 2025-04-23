@@ -20,6 +20,7 @@ export async function aiProductFormat(
     const result = await model.generateContent(userPrompt);
     const processedData = JSON.parse(result.response.text());
 
+    console.log(`�� Successfully processed ${processedData.length} products`);
     return processedData.map((aiResponse: AIResponse) =>
       convertAIResponseToReceiptItem(aiResponse, products),
     );
