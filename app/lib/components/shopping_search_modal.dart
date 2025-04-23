@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:zuino/components/base_item_card.dart';
 import 'package:zuino/database/product_database.dart';
+import 'package:zuino/database/shopping_list_database.dart';
 import 'package:zuino/models/product.dart';
+import 'package:zuino/models/shopping_item.dart';
 import 'package:zuino/components/product_card.dart';
 import 'package:zuino/utils/logger.dart';
+import 'package:zuino/utils/toast_manager.dart';
 
 class ShoppingSearchModal extends StatefulWidget {
   const ShoppingSearchModal({super.key});
@@ -111,6 +115,34 @@ class _ShoppingSearchModalState extends State<ShoppingSearchModal>
     });
     _searchProducts(); // This will now load recent products
     _focusNode.requestFocus(); // Keep focus on the search field
+  }
+
+  void _handleNewProductCardTap() async {
+    final searchText = _searchController.text.trim();
+    if (searchText.isEmpty) return;
+
+    try {
+      // Create a new product with the search text as the name
+      final newProduct = Product(
+        code: searchText,
+        name: searchText,
+        category: 'Novo Produto', // Default category
+      );
+
+      // Save the product to the database
+      await _productDb.insertOrUpdate(newProduct);
+
+      // Add the product to the shopping list
+      final shoppingListDb = ShoppingListDatabase();
+      final shoppingItem = ShoppingItem(productCode: searchText, quantity: 1.0);
+      await shoppingListDb.addOrUpdateItem(shoppingItem);
+
+      // Clear the search and close the modal
+      _clearSearch();
+    } catch (e) {
+      _logger.error('Error creating new product', e);
+      ToastManager.showError('Erro ao criar produto: ${e.toString()}');
+    }
   }
 
   @override
@@ -226,7 +258,37 @@ class _ShoppingSearchModalState extends State<ShoppingSearchModal>
                     if (hasFullHeight)
                       Flexible(
                         child:
-                            _filteredProducts.isEmpty
+                            _filteredProducts.isEmpty &&
+                                    !_isLoading &&
+                                    _searchController.text.trim().isNotEmpty
+                                ? GridView.builder(
+                                  padding: const EdgeInsets.all(16),
+                                  physics:
+                                      const AlwaysScrollableScrollPhysics(),
+                                  gridDelegate:
+                                      const SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 3,
+                                        childAspectRatio: 1,
+                                        crossAxisSpacing: 0,
+                                        mainAxisSpacing: 0,
+                                      ),
+                                  itemCount: 1, // Just one item
+                                  itemBuilder: (context, index) {
+                                    final searchText =
+                                        _searchController.text.trim();
+                                    return BaseItemCard(
+                                      name: searchText,
+                                      category: 'Novo produto',
+                                      roundTopLeft: true,
+                                      roundTopRight: true,
+                                      roundBottomLeft: true,
+                                      roundBottomRight: true,
+                                      fixedSize: true,
+                                      onTap: _handleNewProductCardTap,
+                                    );
+                                  },
+                                )
+                                : _filteredProducts.isEmpty
                                 ? Center(
                                   child: Text(
                                     _isLoading
@@ -239,30 +301,22 @@ class _ShoppingSearchModalState extends State<ShoppingSearchModal>
                                 )
                                 : GridView.builder(
                                   padding: const EdgeInsets.all(16),
-                                  // Ensure the GridView can scroll to the bottom
                                   physics:
                                       const AlwaysScrollableScrollPhysics(),
                                   gridDelegate:
                                       const SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: 3, // 3 items per row
-                                        childAspectRatio:
-                                            1, // Square aspect ratio
-                                        crossAxisSpacing:
-                                            0, // No spacing horizontally
-                                        mainAxisSpacing:
-                                            0, // No spacing vertically
+                                        crossAxisCount: 3,
+                                        childAspectRatio: 1,
+                                        crossAxisSpacing: 0,
+                                        mainAxisSpacing: 0,
                                       ),
                                   itemCount: _filteredProducts.length,
                                   itemBuilder: (context, index) {
                                     final product = _filteredProducts[index];
 
                                     // Calculate position in grid
-                                    final int row =
-                                        index ~/
-                                        3; // Integer division by 3 (crossAxisCount)
-                                    final int col =
-                                        index %
-                                        3; // Remainder when divided by 3
+                                    final int row = index ~/ 3;
+                                    final int col = index % 3;
 
                                     // Determine which corners should be rounded
                                     final bool roundTopLeft =

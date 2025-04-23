@@ -169,6 +169,8 @@ class BaseItemCard extends StatelessWidget {
         return Icons.construction; // Better icon for household items
       case 'bebidas':
         return Icons.liquor; // Better icon for drinks
+      case 'novo produto':
+        return Icons.add_circle_outline;
       default:
         return Icons
             .help_outline; // Subtle question mark for uncategorized items
