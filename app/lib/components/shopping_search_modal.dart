@@ -152,10 +152,10 @@ class _ShoppingSearchModalState extends State<ShoppingSearchModal>
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
 
     // Calculate the available height (screen height minus keyboard height)
-    final availableHeight = screenSize.height - keyboardHeight;
+    final availableHeight = screenSize.height * 0.8 - keyboardHeight;
 
     // Calculate the maximum height (80% of available height)
-    final maxModalHeight = availableHeight * 0.8;
+    final maxModalHeight = availableHeight;
 
     return AnimatedBuilder(
       animation: _animation,
