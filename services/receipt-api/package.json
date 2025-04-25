@@ -1,0 +1,49 @@
+{
+  "name": "api",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "nodemon --watch src --ext ts --exec tsx src/index.ts",
+    "create:db": "tsx scripts/setupLowdb.ts",
+    "lint": "eslint . --ext .ts,.js",
+    "test": "echo Error: no test specified && exit 1",
+    "test:category": "tsx src/db/category.db.test.ts"
+  },
+  "keywords": [
+    "lowdb",
+    "typescript",
+    "node",
+    "esm",
+    "express"
+  ],
+  "author": "Paulo Eduardo da Silva",
+  "license": "ISC",
+  "dependencies": {
+    "@google/genai": "^0.9.0",
+    "@google/generative-ai": "^0.24.0",
+    "@types/cheerio": "^0.22.35",
+    "@typescript-eslint/parser": "^8.29.1",
+    "axios": "^1.6.2",
+    "cheerio": "^1.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^4.18.2",
+    "lowdb": "^7.0.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.24.0",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.4",
+    "eslint": "^9.24.0",
+    "eslint-plugin-import": "^2.31.0",
+    "globals": "^16.0.0",
+    "nodemon": "^3.0.2",
+    "tsx": "^4.19.3",
+    "typescript": "^5.3.3",
+    "typescript-eslint": "^8.29.1"
+  }
+}
