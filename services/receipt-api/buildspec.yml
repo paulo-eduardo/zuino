@@ -7,30 +7,30 @@ phases:
     commands:
       - echo Instalando todas as dependencias...
       - npm ci
-    pre_build:
-      commands:
-        - echo Fase de Pre_build
-    build:
-      commands:
-        - echo Build iniciado em `date`
-        - npm run build
-        - echo Build finalizado em `date`
-    post_build:
-      commands:
-        - echo Fase de Post_build iniciada...
-        - echo Removendo dependencias de desenvolvimento...
-        - npm prune --production
-        - echo Remocao concluida. Preparando artefato...
+  pre_build:
+    commands:
+      - echo Fase de Pre_build
+  build:
+    commands:
+      - echo Build iniciado em `date`
+      - npm run build
+      - echo Build finalizado em `date`
+  post_build:
+    commands:
+      - echo Fase de Post_build iniciada...
+      - echo Removendo dependencias de desenvolvimento...
+      - npm prune --production
+      - echo Remocao concluida. Preparando artefato...
 
 artifacts:
   files:
-    - 'dist/**/*'
-    - 'node_modules/*/*'
-    - 'scripts/**/*'
-    - 'appspec.yml'
-    - 'package.json'
-    - 'package-lock.json'
+    - "dist/**/*"
+    - "node_modules/**/*"
+    - "scripts/**/*"
+    - "appspec.yml"
+    - "package.json"
+    - "package-lock.json"
 
 cache:
   paths:
-    - 'node_modules/**/*'
+    - "node_modules/**/*"
