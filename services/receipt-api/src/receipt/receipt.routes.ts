@@ -1,5 +1,5 @@
 import { Router } from "express";
-import * as receiptController from "./receipt.controller.ts";
+import * as receiptController from "./receipt.controller";
 
 const router = Router();
 
