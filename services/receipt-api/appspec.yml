@@ -1,0 +1,22 @@
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /var/www/html/services/receipt-api
+  hooks:
+    BeforeInstall:
+      - location: scripts/before_install.sh
+      timeout: 300
+      runas: ec2-user
+    AfterInstall:
+      - location: scripts/after_install.sh
+        timeout: 300
+        runas: ec2-user
+    ApplicationStart:
+      - location: scripts/application_start.sh
+        timeout: 300
+        runas: ec2-user
+    ValidateService:
+      - location: scripts/validate_service.sh
+        timeout: 60
+        runas: ec2-user
