@@ -1,5 +1,5 @@
-import { model } from "../config/gemini.config";
-import { ReceiptItem } from "../receipt/receipt.interfaces";
+import { model } from "../config/gemini.config.js";
+import { ReceiptItem } from "../receipt/receipt.interfaces.js";
 
 interface AIResponse {
   codigo: string;

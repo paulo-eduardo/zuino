@@ -1,3 +1,4 @@
 /node_modules
 config/categories_lowdb.json
 .env
+/dist
