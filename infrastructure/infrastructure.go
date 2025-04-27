@@ -69,10 +69,10 @@ func NewInfrastructureStack(scope constructs.Construct, id string, props *Infras
 	})
 	userData.AddCommands(jsii.String(userDataScript))
 
-	instance := awsec2.NewInstance(stack, jsii.String("AppEC2Instance"), &awsec2.InstanceProps{
+	instance := awsec2.NewInstance(stack, jsii.String("AppEC2InstanceV2"), &awsec2.InstanceProps{
 		Vpc:                      vpc,
 		InstanceType:             awsec2.InstanceType_Of(awsec2.InstanceClass_T3, awsec2.InstanceSize_MICRO),
-		MachineImage:             awsec2.MachineImage_LatestAmazonLinux2(nil),
+		MachineImage:             awsec2.MachineImage_LatestAmazonLinux2023(nil),
 		SecurityGroup:            instanceSg,
 		Role:                     instanceRole,
 		UserData:                 userData,
