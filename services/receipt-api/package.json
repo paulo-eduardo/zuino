@@ -7,10 +7,8 @@
     "build": "tsc && tsc-alias",
     "start": "node dist/index.js",
     "dev": "nodemon --watch src --ext ts --exec tsx src/index.ts",
-    "create:db": "tsc src/scripts/setupLowdb.ts",
     "lint": "eslint . --ext .ts,.js",
-    "test": "echo Error: no test specified && exit 1",
-    "test:category": "tsx src/db/category.db.test.ts"
+    "test": "echo Error: no test specified && exit 1"
   },
   "keywords": [
     "lowdb",
@@ -30,8 +28,7 @@
     "cheerio": "^1.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
-    "express": "^4.18.2",
-    "lowdb": "^7.0.1"
+    "express": "^4.18.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.24.0",
