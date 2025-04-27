@@ -11,8 +11,8 @@ if [ -d "$DEPLOY_DIR" ]; then
   cd "$DEPLOY_DIR"
   echo "Diretorio atual: $(pwd)"
 
-  pm2 describe $APP_NAME >/dev/null 2>&1
-  PM2_EXISTS=$?
+  PM2_EXISTS=0
+  pm2 describe $APP_NAME >/dev/null 2>&1 || PM2_EXISTS=$?
 
   if [ "$PM2_EXISTS" -eq 0 ]; then
     echo "Parando aplicacao '$APP_NAME' gerenciada pelo PM2..."
