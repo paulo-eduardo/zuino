@@ -12,13 +12,13 @@ yum install ruby wget -y
 # Download and install CodeDeploy Agent
 # Determine region from instance metadata
 EC2_AVAIL_ZONE=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
-EC2_REGION=$(echo \"$EC2_AVAIL_ZONE\" | sed 's/[a-z]$//')
+EC2_REGION=$(echo "$EC2_AVAIL_ZONE" | sed 's/[a-z]$//')
 cd /home/ec2-user
-wget https://aws-codedeploy-$EC2_REGION.s3.$EC2_REGION.amazonaws.com/latest/install
+wget https://aws-codedeploy-${EC2_REGION}.s3.${EC2_REGION}.amazonaws.com/latest/install
 chmod +x ./install
-./install auto
-systemctl start codedeploy-agent
-systemctl enable codedeploy-agent
+sudo ./install auto
+sudo systemctl start codedeploy-agent
+sudo systemctl enable codedeploy-agent
 # Ensure SSM Agent is running (usually installed on AL2)
 systemctl status amazon-ssm-agent || systemctl start amazon-ssm-agent
 systemctl enable amazon-ssm-agent
