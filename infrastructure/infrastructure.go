@@ -80,6 +80,8 @@ func NewInfrastructureStack(scope constructs.Construct, id string, props *Infras
 		AssociatePublicIpAddress: jsii.Bool(true),
 	})
 
+	awscdk.Tags_Of(instance).Add(jsii.String("App"), jsii.String("MyBackend"), &awscdk.TagProps{})
+
 	awscdk.NewCfnOutput(stack, jsii.String("InstancePublicIpOutput"), &awscdk.CfnOutputProps{
 		Value:       instance.InstancePublicIp(),
 		Description: jsii.String("Public IP Address of the EC2 instance"),
