@@ -4,8 +4,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 dotenv.config();
 
-import { initDb } from "./db/lowdb.client"; // Change the import to use .ts extension instead of .js
-import receiptRoutes from "./receipt/receipt.routes";
+import { initDb } from "./db/lowdb.client.js"; // Change the import to use .ts extension instead of .js
+import receiptRoutes from "./receipt/receipt.routes.js";
 
 const app = express();
 const port = process.env.PORT || 3000;

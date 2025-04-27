@@ -1,5 +1,5 @@
-import { db } from "./lowdb.client";
-import type { Category } from "./lowdb.client";
+import { db } from "./lowdb.client.js";
+import type { Category } from "./lowdb.client.js";
 
 function escapeRegex(string: string): string {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

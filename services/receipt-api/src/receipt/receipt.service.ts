@@ -1,7 +1,7 @@
 import axios from "axios";
 import * as cheerio from "cheerio";
-import { ReceiptItem, Receipt, Store } from "./receipt.interfaces";
-import { aiProductFormat } from "../services/ai.service";
+import { ReceiptItem, Receipt, Store } from "./receipt.interfaces.js";
+import { aiProductFormat } from "../services/ai.service.js";
 
 export async function getReceiptDetails(
   url: string,
