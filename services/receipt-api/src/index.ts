@@ -13,6 +13,10 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(bodyParser.json());
 
+app.get("/health", (req, res) => {
+  res.status(200).send("OK");
+});
+
 app.use("/receipt", receiptRoutes);
 
 // Initialize the database before starting the server

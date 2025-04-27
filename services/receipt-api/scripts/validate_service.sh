@@ -3,7 +3,7 @@
 echo "--- Hook ValidateService iniciado ---"
 
 APP_PORT=3000
-HEALTH_CHECK_URL="http://localhost:${APP_PORT}/"
+HEALTH_CHECK_URL="http://localhost:${APP_PORT}/health"
 MAX_RETRIES=5
 RETRY_INTERVAL=5
 RETRY_COUNT=0
