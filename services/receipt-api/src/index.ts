@@ -12,6 +12,13 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(bodyParser.json());
 
+app.use((req, _res, next) => {
+  console.log(
+    `[ReceiptService] Request Received: ${req.method} ${req.originalUrl} from ${req.ip}`,
+  );
+  next();
+});
+
 app.get("/health", (_, res) => {
   res.status(200).send("OK");
 });
