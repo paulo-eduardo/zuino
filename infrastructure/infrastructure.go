@@ -41,6 +41,24 @@ func NewInfrastructureStack(scope constructs.Construct, id string, props *Infras
 		},
 	})
 
+	geminiApiKeyParameterName := "/zuino/api/gemini-api-key"
+
+	instanceRole.AddToPolicy(awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+		Effect: awsiam.Effect_ALLOW,
+		Actions: &[]*string{
+			jsii.String("ssm:GetParameter"),
+		},
+		Resources: &[]*string{
+			awscdk.Arn_Format(&awscdk.ArnComponents{
+				Service:      jsii.String("ssm"),
+				Region:       stack.Region(),
+				Account:      stack.Account(),
+				Resource:     jsii.String("parameter"),
+				ResourceName: jsii.String(geminiApiKeyParameterName),
+			}, stack),
+		},
+	}))
+
 	vpc := awsec2.Vpc_FromLookup(stack, jsii.String("DefaultVPC"), &awsec2.VpcLookupOptions{
 		IsDefault: jsii.Bool(true),
 	})

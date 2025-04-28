@@ -1,10 +1,56 @@
+import { SSMClient, GetParameterCommand } from "@aws-sdk/client-ssm";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import dotenv from "dotenv";
-
 dotenv.config();
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+const parameterName = "/zuino/api/gemini-api-key";
+const region = process.env.AWS_REGION || "us-east-1";
+const ssmClient = new SSMClient({ region });
+
+let geminiApiKey = process.env.GEMINI_API_KEY || undefined;
+let genAIClient: GoogleGenerativeAI | undefined;
+
+async function getGeminiKeyAndInitClient(): Promise<GoogleGenerativeAI> {
+  if (genAIClient) {
+    return genAIClient;
+  }
+
+  if (geminiApiKey) {
+    console.log(
+      "[ReceiptService] Inicializando cliente de AI Generativo Gemini com chave em variavel de ambiente",
+    );
+    genAIClient = new GoogleGenerativeAI(geminiApiKey);
+    return genAIClient;
+  }
+
+  try {
+    console.log(
+      `[ReceiptService] Buscando chave gemini do parameter Store: ${parameterName}`,
+    );
+    const command = new GetParameterCommand({
+      Name: parameterName,
+      WithDecryption: true,
+    });
+    const response = await ssmClient.send(command);
+    geminiApiKey = response.Parameter?.Value;
+
+    if (!geminiApiKey) {
+      throw new Error(
+        "Valor da chave Gemini nao encontrado no Parameter Store.",
+      );
+    }
+    console.log("[ReceiptService] Chave Gemini obtida.");
+  } catch (error) {
+    console.error("[ReceiptService] Errp ap biscar cjave gemini:", error);
+    throw error;
+  }
+
+  console.log(
+    "[ReceiptService] Inicializando cliente de AI Generativo Gemini com chave do Parameter Store",
+  );
+  genAIClient = new GoogleGenerativeAI(geminiApiKey);
+  return genAIClient;
+}
 
 const CATEGORIES = [
   {
@@ -239,7 +285,7 @@ Retorne **APENAS E SOMENTE** um array JSON válido contendo um objeto para CADA 
 `;
 }
 
-export const model = genAI.getGenerativeModel({
+export const model = (await getGeminiKeyAndInitClient()).getGenerativeModel({
   model: "gemini-2.0-flash",
   systemInstruction: {
     role: "model",
