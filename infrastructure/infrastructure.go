@@ -127,12 +127,14 @@ func NewInfrastructureStack(scope constructs.Construct, id string, props *Infras
 	ec2Integration := awsapigatewayv2integrations.NewHttpUrlIntegration(
 		jsii.String("EC2Integration"),
 		jsii.String(instanceUrl),
-		&awsapigatewayv2integrations.HttpUrlIntegrationProps{},
+		&awsapigatewayv2integrations.HttpUrlIntegrationProps{
+			Method: awsapigatewayv2.HttpMethod_ANY, // Forward ANY HTTP method
+		},
 	)
 
-	awsapigatewayv2.NewHttpRoute(stack, jsii.String("ReceiptPostRoute"), &awsapigatewayv2.HttpRouteProps{
+	awsapigatewayv2.NewHttpRoute(stack, jsii.String("DefaultRoute"), &awsapigatewayv2.HttpRouteProps{
 		HttpApi:     httpApi,
-		RouteKey:    awsapigatewayv2.HttpRouteKey_With(jsii.String("/receipt/scan"), awsapigatewayv2.HttpMethod_POST),
+		RouteKey:    awsapigatewayv2.HttpRouteKey_DEFAULT(),
 		Integration: ec2Integration,
 	})
 
